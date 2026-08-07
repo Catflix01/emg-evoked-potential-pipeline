@@ -7,6 +7,19 @@ in a pre-stimulus window and a response window.
 Raw data and the manifest are gitignored: they are human-subjects material.
 `docs/legacy/` is the inherited MATLAB, kept for reference only.
 
+## Nothing to install: use it in a browser
+
+Open the published page, choose your recordings, and read the results. The Python runs
+inside your own browser, so recordings are read from your machine and never sent anywhere.
+Works on Windows and Mac, needs no terminal and no admin rights.
+
+[**docs/for-the-pi.md**](docs/for-the-pi.md) is the one-page guide for anyone using it this
+way. The link to the page itself appears once GitHub Pages is switched on for the
+repository, under Settings, Pages.
+
+Everything below is for running it from a terminal instead, which is faster and adds the
+comparison and self-check tools.
+
 ## Setup
 
 ```bash

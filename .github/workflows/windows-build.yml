@@ -1,0 +1,66 @@
+# Build a downloadable Windows version and attach it to a release.
+#
+# UNVERIFIED. This workflow has never produced an executable that anyone has run. It was
+# written on a Mac, where a Windows executable cannot be built or tested, so the first
+# person to download it is also the first person to find out whether it works. Until
+# somebody confirms it on an actual Windows machine, point people at the browser version
+# instead: it needs no download, no install and no security exception.
+#
+# Two things to expect even when it does work:
+#   - Windows shows "Windows protected your PC" for any unsigned program. The user has to
+#     click "More info" and then "Run anyway". Removing that warning needs a code-signing
+#     certificate, which costs a few hundred a year.
+#   - The download is large, in the region of 300-400 MB, because it carries Python and
+#     every library with it.
+name: build the Windows download
+
+on:
+  workflow_dispatch:      # deliberately manual: this is not ready to run on every push
+  release:
+    types: [published]
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install the project and PyInstaller
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build
+        run: |
+          pyinstaller --onefile --name EMG-Pipeline `
+            --collect-all streamlit `
+            --collect-all pandas `
+            --collect-all matplotlib `
+            --collect-all seaborn `
+            --collect-data openpyxl `
+            --add-data "src;src" `
+            --add-data "config;config" `
+            --add-data "web/pi_app.py;." `
+            launcher.py
+
+      - name: Check it at least starts
+        run: |
+          Start-Process -FilePath "dist\EMG-Pipeline.exe" -PassThru | Out-Null
+          Start-Sleep -Seconds 45
+          try {
+            $r = Invoke-WebRequest -Uri "http://localhost:8501" -UseBasicParsing -TimeoutSec 20
+            if ($r.StatusCode -eq 200) { "the app answered on port 8501" }
+            else { throw "unexpected status $($r.StatusCode)" }
+          } catch {
+            "the executable built but did not answer. It is not ready to hand to anyone."
+            exit 1
+          }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EMG-Pipeline-Windows
+          path: dist/EMG-Pipeline.exe
