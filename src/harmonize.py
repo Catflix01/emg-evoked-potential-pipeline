@@ -57,26 +57,26 @@ SCHEMA = [
 #   \d = a digit    [A-Z] = a capital letter    + = one or more    ? = optional
 
 SUBJECT_TOKEN = re.compile(r"""
-    ^ (?P<study>      [A-Z]+\d+ )     # P1
-      (?P<group>      [A-Z]     )     # S
-      (?P<subject_ID> \d+       ) $   # 01
+    ^ (?P<study>      [A-Z]+\d+ )     
+      (?P<group>      [A-Z]     )     
+      (?P<subject_ID> \d+       ) $   
 """, re.VERBOSE)
 
 VISIT_TOKEN = re.compile(r"""
-    ^ V (?P<visit>     \d+ )          # V1
-      T (?P<timepoint> \d+ ) $        # T0
+    ^ V (?P<visit>     \d+ )          
+      T (?P<timepoint> \d+ ) $        
 """, re.VERBOSE)
 
 TARGET_TOKEN = re.compile(r"""
-    ^ (?P<target_side>   [LR] )?      # L, or blank if the name carries no side
-      (?P<target_muscle> .+   ) $     # APB
+    ^ (?P<target_side>   [LR] )?      
+      (?P<target_muscle> .+   ) $     
 """, re.VERBOSE)
 
 DATETIME_TOKEN = re.compile(r"""
-    ^ (?P<date>   \d{8} ) -           # 02152023
-      (?P<hour>   \d{2} ) -           # 14
-      (?P<minute> \d{2} ) -           # 18
-      (?P<second> \d{2} ) $           # 25
+    ^ (?P<date>   \d{8} ) -           
+      (?P<hour>   \d{2} ) -           
+      (?P<minute> \d{2} ) -           
+      (?P<second> \d{2} ) $           
 """, re.VERBOSE)
 
 # A session folder, e.g. DEMO1S01_V1E1_01012024. The experiment number lives only here —

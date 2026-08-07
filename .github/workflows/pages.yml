@@ -1,0 +1,71 @@
+# Publish the browser version of the app to GitHub Pages.
+#
+# The page is static. It carries the Python source, and a visitor's browser runs it —
+# so recordings a user picks are read on their own machine and never reach a server.
+# There is no server to reach.
+#
+# The site is rebuilt on every push to main, so the link never changes and an update
+# reaches the people using it the next time they reload.
+name: publish the browser app
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Refuse to publish if anything patient-related would go with it
+        run: python src/check_before_publish.py
+
+      - name: Assemble the site
+        run: |
+          mkdir -p site/src site/config
+          cp web/index.html web/pi_app.py site/
+          # only the modules the browser app imports; nothing that needs pyarrow,
+          # joblib or a terminal
+          cp src/harmonize.py src/cusum.py src/figures.py site/src/
+          cp config/params.yaml site/config/
+
+      - name: Check every file the page asks for is present
+        run: |
+          for f in index.html pi_app.py src/harmonize.py src/cusum.py src/figures.py config/params.yaml; do
+            test -f "site/$f" || { echo "missing from the site: $f"; exit 1; }
+          done
+          echo "all referenced files present"
+
+      - name: Confirm no recording was swept into the site
+        run: |
+          if find site -name '*_eventonly.csv' -o -name '*.parquet' | grep -q .; then
+            echo "a recording or a results file reached the published site"
+            exit 1
+          fi
+          echo "no recordings in the site"
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
