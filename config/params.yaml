@@ -1,0 +1,30 @@
+sampling_rate_hz: 5000
+trigger_threshold: 5
+
+# Where the recordings live. Leave blank to use data/raw; set it to a study tree and
+# every subfolder is searched. Nothing is ever copied — the files are read in place.
+data_root:
+manifest_sheet: draft-pharma
+
+# The measurement windows, in milliseconds from the stimulus. This block is the only
+# place any window is written down: the pipeline measures with these numbers and also
+# prints them into the prestim_window / response_window / 2nd_response_window columns,
+# so a row can never claim a window the arithmetic did not use.
+windows_ms:
+  prestim: [-100, -50]        # the quiet period before the stimulus, for every protocol
+  response:
+    default: [10, 70]
+    PNS: [3.5, 25]            # a peripheral M-wave arrives far sooner than a cortical MEP
+  second_response: {}         # none specified yet, so the 2nd_* columns stay blank
+
+# Response timing — see docs/cusum-method.md.
+cusum:
+  # A muscle is treated as contracting when its median pre-stimulus peak-to-peak
+  # exceeds this. PROVISIONAL — calibrated only as a floor: every recording in the
+  # local sample is at rest, and the noisiest of them reaches 0.127 (SIC/RECR), so
+  # anything lower produces false positives. Whether 0.15 is also low enough to catch
+  # a real contraction cannot be known until an AMT/AREC recording is available.
+  active_above_pk_pk: 0.15
+  epoch_before_ms: 100        # how much quiet EMG the Cusum needs to set its baseline
+  epoch_after_ms: 150         # how far past the stimulus to look
+  silent_period_end_ms: 300   # the silent period is searched within this window

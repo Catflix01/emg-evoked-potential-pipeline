@@ -1,0 +1,25 @@
+# Everything this project needs to run. Install with:
+#     pip install -r requirements.txt
+#
+# Versions are pinned (==) so that another machine, or this one in two years,
+# produces the same numbers. Only packages the code asks for directly are listed;
+# anything those need in turn is installed automatically.
+
+# Reading and writing the data
+pandas==3.0.3
+numpy==2.5.1
+openpyxl==3.1.5        # reads the .xlsx manifest
+pyarrow==24.0.0        # writes the .parquet output; streamlit requires <25
+PyYAML==6.0.3          # reads config/params.yaml
+joblib==1.5.3          # processes recordings in parallel
+
+# Figures
+matplotlib==3.11.1
+seaborn==0.13.2
+scipy==1.18.0
+
+# The point-and-click app
+streamlit==1.60.0
+
+# Tests
+pytest==9.1.1

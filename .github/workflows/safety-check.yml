@@ -1,0 +1,51 @@
+# Runs the pre-publish safety check on every push and pull request.
+#
+# The check also exists as a local git hook, but a local hook only protects the machine
+# it is installed on. This one travels with the repository, so a commit from anyone —
+# or from a machine that never installed the hook — is still checked before the app
+# rebuilds from it.
+name: safety check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  no-patient-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0        # the check inspects history, not just the tip
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Refuse to publish patient data
+        run: python src/check_before_publish.py
+
+      - name: Refuse a participant code anywhere in history
+        run: |
+          if git log --all --full-history --oneline -- \
+               'docs/Centralized-NIDAQ-System*' \
+               'docs/Pharma-rundown.xlsx' \
+               'docs/Table-layout.csv' \
+               'docs/data_processing_flow_*.xlsx' \
+               'data/raw/**' | grep -q .; then
+            echo "A file that must never be committed appears in history."
+            exit 1
+          fi
+          echo "No excluded file appears anywhere in history."
+
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      # The real recordings are not in the repository, so the tests that need them skip.
+      # The synthetic demo set is committed, so those tests do run.
+      - run: python -m pytest -q

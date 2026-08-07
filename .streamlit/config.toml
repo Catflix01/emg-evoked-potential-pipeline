@@ -1,0 +1,10 @@
+# Bind to this computer only. Streamlit's default is to serve on every network
+# interface, which would make patient recordings reachable from other machines on
+# the network. These are human-subjects data, so the app stays on localhost.
+[server]
+address = "localhost"
+headless = true
+
+# Nothing is sent to Streamlit's servers.
+[browser]
+gatherUsageStats = false
