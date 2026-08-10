@@ -398,11 +398,23 @@ def write_results(master, outputs_dir):
     master.round(READABLE_DECIMALS).to_csv(outputs_dir/"master_results.csv", index=False)
 
 
-# Folders that hold CSVs but never recordings. Without this, pointing the pipeline at a
-# project directory picks up the virtual environment's own test data — numpy alone ships
-# dozens of .csv files — and pointing it at a home folder would walk everything.
-NOT_DATA_FOLDERS = {".venv", "venv", "outputs", "docs", "notebooks", "__pycache__",
-                    "site-packages", "node_modules"}
+# Folders that hold CSVs but never raw recordings.
+#
+# Two kinds. Development folders, because pointing the pipeline at a project directory
+# would otherwise pick up the virtual environment's own test data: numpy alone ships
+# dozens of .csv files.
+#
+# And the study's own output folders. DATA_FOR_PROCESSING keeps raw recordings in
+# ALL-DATA, with siblings holding results. Without these, pointing at a study root would
+# walk into 2.PROCESSED-DATA and 7.CLEAN-DATA and measure previous results as though they
+# were recordings, which is worse than failing: it is measuring a measurement.
+NOT_DATA_FOLDERS = {
+    ".venv", "venv", "outputs", "docs", "notebooks", "__pycache__",
+    "site-packages", "node_modules",
+    "ARCHIVE", "CODE",
+    "1.CROSS-CHECK", "2.PROCESSED-DATA", "3.REORDER-DATA", "4.DEMOGRAPHICS",
+    "5.OTHER-DATA", "6.CONCATENATED", "7.CLEAN-DATA", "8.PRETTY-FIGURES",
+}
 
 
 def find_recordings(folder):

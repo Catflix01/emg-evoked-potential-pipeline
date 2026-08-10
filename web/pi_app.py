@@ -8,6 +8,7 @@ code the command-line version uses, so the numbers are identical either way.
 """
 import io
 import sys
+import zipfile
 import tempfile
 from pathlib import Path
 
@@ -16,7 +17,8 @@ import streamlit as st
 import yaml
 
 sys.path.append("src")
-from harmonize import process_file, READABLE_DECIMALS, NOT_A_RECORDING
+from harmonize import (process_file, find_recordings, READABLE_DECIMALS,
+                       NOT_A_RECORDING)
 import figures
 
 st.set_page_config(page_title="EMG pipeline", page_icon="⚡", layout="wide")
@@ -70,14 +72,63 @@ def to_temp_file(uploaded):
 
 # --------------------------------------------------------------- step 1: the recordings
 st.header("Step 1. Choose your recordings")
-st.caption("The .csv files from the recording system. You can pick several at once.")
-chosen = st.file_uploader(
-    "Recordings", type="csv", accept_multiple_files=True, label_visibility="collapsed"
-)
-recordings = [f for f in (chosen or []) if NOT_A_RECORDING not in f.name]
-if chosen and len(recordings) < len(chosen):
-    st.caption(f"Ignoring {len(chosen) - len(recordings)} file(s) that hold stimulus "
-               "intensities rather than EMG.")
+
+whole_folder, single_files = st.tabs(["A whole folder (recommended)", "A few files"])
+
+with whole_folder:
+    st.markdown(
+        "Right-click the folder for one participant, or one session inside it, and choose "
+        "**Compress** on a Mac or **Send to → Compressed (zipped) folder** on Windows. "
+        "Then drop that single file here."
+    )
+    st.caption("This keeps the folder names, which is how the session and experiment "
+               "columns get filled in. One participant or one session at a time: a whole "
+               "study is too large to open in a browser.")
+    zipped = st.file_uploader("Zipped folder", type="zip", label_visibility="collapsed")
+
+with single_files:
+    st.caption("Quicker for one or two recordings. The session and experiment columns come "
+               "out blank this way, because a file picker does not pass on folder names.")
+    chosen = st.file_uploader("Recordings", type="csv", accept_multiple_files=True,
+                              label_visibility="collapsed")
+
+
+@st.cache_data(show_spinner="Opening the folder…")
+def unpack(zip_bytes, name):
+    """Unpack a zipped folder and find the recordings inside it.
+
+    Extracted to a real directory so the pipeline sees the folder structure exactly as it
+    sits on the machine the zip came from. That structure is where the session and
+    experiment columns come from.
+    """
+    target = Path(tempfile.mkdtemp(prefix="emg_")) / "folder"
+    with zipfile.ZipFile(io.BytesIO(zip_bytes)) as archive:
+        # a zip should not be able to write outside the folder it is extracted into
+        safe = [m for m in archive.namelist()
+                if not m.startswith("/") and ".." not in Path(m).parts]
+        archive.extractall(target, members=safe)
+    return target, find_recordings(target)
+
+
+recordings, folder_root = [], None
+
+if zipped is not None:
+    folder_root, recordings = unpack(zipped.getbuffer().tobytes(), zipped.name)
+    if recordings:
+        st.success(f"Found **{len(recordings)}** recordings in `{zipped.name}`")
+        with st.expander("Show what was found"):
+            st.write([str(f.relative_to(folder_root)) for f in recordings])
+    else:
+        st.warning(
+            "No recordings found in that zip. It should hold the folders as they sit on "
+            "your computer, with the `.csv` recordings somewhere below. Result folders "
+            "such as `2.PROCESSED-DATA` are skipped on purpose."
+        )
+elif chosen:
+    recordings = [f for f in chosen if NOT_A_RECORDING not in f.name]
+    if len(recordings) < len(chosen):
+        st.caption(f"Ignoring {len(chosen) - len(recordings)} file(s) that hold stimulus "
+                   "intensities rather than EMG.")
 
 # --------------------------------------------------------------- step 2: the lineup
 st.header("Step 2. Choose the channel list")
@@ -120,12 +171,16 @@ if st.button(f"Measure {len(recordings)} recording(s)", type="primary"):
     config = load_config()
     progress = st.progress(0.0, text="Starting")
     tables, skipped = [], []
-    for i, uploaded in enumerate(recordings, start=1):
-        progress.progress(i / len(recordings), text=f"{uploaded.name} ({i} of {len(recordings)})")
+    for i, item in enumerate(recordings, start=1):
+        # from a zip these are already paths on disk, with their folders intact; from the
+        # file picker they are uploads that have to be written out first
+        path = item if isinstance(item, Path) else to_temp_file(item)
+        label = str(path.relative_to(folder_root)) if folder_root else path.name
+        progress.progress(i / len(recordings), text=f"{label} ({i} of {len(recordings)})")
         try:
-            tables.append(process_file(to_temp_file(uploaded), manifest, config))
+            tables.append(process_file(path, manifest, config))
         except Exception as e:
-            skipped.append({"file": uploaded.name, "reason": str(e)})
+            skipped.append({"file": label, "reason": str(e)})
     progress.empty()
 
     if not tables:

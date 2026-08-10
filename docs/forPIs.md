@@ -28,8 +28,16 @@ After that it starts quickly.
 
 **2. Choose your recordings.**
 
-Click the box under *Choose your recordings* and select the `.csv` files from the
-recording system. You can select as many as you like at once.
+The easiest way is to give it a whole folder. Find the folder for one participant, or for
+one session inside it. Right-click it and choose **Send to → Compressed (zipped) folder**
+on Windows, or **Compress** on a Mac. That makes a single `.zip` file next to the original.
+Drop that one file into the box.
+
+Do one participant, or one session, at a time. A whole study is far too large to open in a
+browser.
+
+If you only want one or two recordings, the *A few files* tab lets you pick the `.csv`
+files directly instead.
 
 **3. Choose the channel list.**
 
@@ -67,9 +75,10 @@ protocol did what it should, and whether the two measurements agree with each ot
 the reason for each one. The most common are that the channel list has no entry for that
 participant and date, or that no stimulus was detected in the file.
 
-**Two columns are always empty.** `session` and `experiment` come from the names of the
-folders your recordings sit in, and a web browser is given files without their folders.
-Everything else is unaffected.
+**Two columns are empty.** `session` and `experiment` come from the names of the folders
+your recordings sit in. If you used the *A few files* tab they will be blank, because a
+file picker hands over files without their folders. Giving it a zipped folder instead fills
+them in.
 
 **The numbers look wrong.** Check the figure showing one recorded response with the
 measurement windows shaded on it. If the green window is not sitting over the response,
