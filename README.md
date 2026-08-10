@@ -4,8 +4,8 @@ SCI evoked-potential analysis. Reads raw EMG recordings and produces one tidy ta
 a row per muscle per stimulus pulse, with peak-to-peak and area-under-curve measured
 in a pre-stimulus window and a response window.
 
-Raw data and the manifest are gitignored: they are human-subjects material.
-`docs/legacy/` is the inherited MATLAB, kept for reference only.
+Recordings and the channel-lineup workbook are never part of this repository: they are
+human-subjects material. Everything here runs on data you supply.
 
 ## Nothing to install: use it in a browser
 
@@ -13,7 +13,7 @@ Open the published page, choose your recordings, and read the results. The Pytho
 inside your own browser, so recordings are read from your machine and never sent anywhere.
 Works on Windows and Mac, needs no terminal and no admin rights.
 
-[**docs/forPIs.md**](docs/for-the-pi.md) is the one-page guide for anyone using it this
+[**docs/forPIs.md**](docs/forPIs.md) is the one-page guide for anyone using it this
 way. The link to the page itself appears once GitHub Pages is switched on for the
 repository, under Settings, Pages.
 
@@ -79,15 +79,15 @@ millisecond values; no EMG samples. It does print session folder names, which ar
 codes plus dates, so add `--anonymise` before sharing outside the lab. Also available as
 the "Check my data" tab in the app.
 
-Some columns are not yet verified against known-correct data, `selfcheck.py` says which,
-and [docs/data-needed.md](docs/data-needed.md) lists what would settle them.
+Some columns are not yet verified against known-correct data. `python main.py check` says
+which, every time it runs.
 
 ## Publishing it
 
-See [docs/publishing.md](docs/publishing.md). In short: the browser version is published as
-a page anyone can open, and it asks for their own recordings; no data of any kind travels
-with it. Run `python main.py safe-to-publish` before any push. It refuses if a recording,
-the manifest, or a subject code would be committed.
+The browser version is published as a page anyone can open, and it asks each visitor for
+their own recordings; no data of any kind travels with it. Run `python main.py
+safe-to-publish` before any push. It refuses if a recording, the manifest, or a participant
+code would be committed, and the same check runs again on GitHub for every push.
 
 ## Documentation
 
@@ -96,9 +96,8 @@ the manifest, or a subject code would be committed.
   two output files.
 - **[docs/cusum-method.md](docs/cusum-method.md)**, how response onset, offset and EMG
   resumption are found, the stimulus artifact, and the papers behind it.
-- **[docs/data-needed.md](docs/data-needed.md)**, what is still unverified and what would
-  settle it.
-- **[docs/publishing.md](docs/publishing.md)**, how to publish safely.
+- **[docs/forPIs.md](docs/forPIs.md)**, how to use the browser version: open the link,
+  choose your files, read the table, download the results.
 
 ## Tests
 

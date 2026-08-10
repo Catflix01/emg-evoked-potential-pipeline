@@ -25,8 +25,8 @@ filename (tested against all 104 protocols in the *Filenames* sheet).
 | `response_offset`, `emg_resuming` | a silent period only exists during contraction, so these compute on zero rows |
 | `response_onset` | corroborated for the cortical protocols (TMS 25.8 ms, SIC 26.3 ms, both inside the 15–35 ms band), but no hand-scored value has confirmed the convention |
 
-`docs/data-needed.md` lists what would move each of these into the verified column, and
-`src/selfcheck.py` prints the same warning alongside any results it produces.
+`python main.py check` prints this same warning alongside any results it produces, so the
+distinction travels with the numbers rather than living only here.
 
 ---
 
@@ -106,7 +106,7 @@ peak-to-peak range, so `prestim_pk_pk` matches the legacy value exactly.
 `response_onset`, `response_offset`, `emg_resuming` and the four `2nd_*` columns exist in the
 table but nothing fills them in yet. Two separate problems have to be solved first.
 
-**Onset detection.** `data_processing_flow_06012026.xlsx` still lists this as an open question:
+**Onset detection.** The lab's own process notes still list this as an open question:
 *"Can we add response onset latency? Most people use cusum."* Picking a detector and validating
 it against traces the lab trusts is a piece of work in its own right, and a wrong threshold
 produces confident-looking numbers that are silently wrong.
@@ -124,10 +124,10 @@ the output keeps working when the values start appearing.
 
 ---
 
-## Why dates are stored as `2023-02-15` and not `02152023`
+## Why dates are stored as `YYYY-MM-DD` and not `MMDDYYYY`
 
-The recording filenames carry dates as `MMDDYYYY`, e.g. `02152023`. Written to a CSV and opened
-in Excel, or read back with pandas, that becomes the number `2152023`. The leading zero is
+The recording filenames carry dates as `MMDDYYYY`, for example `08152023`. Written to a CSV and opened
+in Excel, or read back with pandas, that becomes the number `8152023`. The leading zero is
 gone, because a field of digits gets treated as a number.
 
 For most dates this is survivable. For January it is not:
@@ -137,8 +137,8 @@ For most dates this is survivable. For January it is not:
 ```
 
 `%m` takes two digits (`11`) before `%d` gets a look, so a January session silently becomes a
-November one. No error is raised. Ten days a year land in this trap, and **two sessions in the
-current manifest** (2024-01-17 and 2024-01-18) fall inside it.
+November one. No error is raised. Ten days a year land in this trap, and real sessions have
+fallen inside it.
 
 ISO format is immune twice over: the hyphens stop anything treating it as a number, and the
 field order is fixed-width so it cannot be re-read a second way.

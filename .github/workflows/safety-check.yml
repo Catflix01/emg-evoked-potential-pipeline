@@ -22,8 +22,9 @@ jobs:
         with:
           python-version: "3.12"
 
+      # `python3` rather than `python`: a runner need not have the shorter alias.
       - name: Refuse to publish patient data
-        run: python src/check_before_publish.py
+        run: python3 src/check_before_publish.py
 
       - name: Refuse a participant code anywhere in history
         run: |
@@ -65,4 +66,4 @@ jobs:
 
       # Recordings are not in the repository, so the tests needing them skip themselves.
       - if: steps.have_tests.outputs.found == 'true'
-        run: python -m pytest -q
+        run: python3 -m pytest -q

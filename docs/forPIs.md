@@ -88,5 +88,5 @@ Response timing (`response_onset`, `response_offset`, `emg_resuming`) is newer a
 yet been checked against traces scored by hand. Treat those columns as provisional. The
 same goes for `is_active`, which guesses whether a muscle was contracting.
 
-If you want to know exactly what is settled and what is not, `docs/data-needed.md` in the
-code repository lists it.
+If you want to know exactly what is settled and what is not, ask whoever maintains this
+tool; the list is kept alongside the code.

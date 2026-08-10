@@ -28,8 +28,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # The check needs an interpreter and nothing else: it imports only the standard
+      # library. `python3` rather than `python`, which a runner need not have on the path.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
       - name: Refuse to publish if anything patient-related would go with it
-        run: python src/check_before_publish.py
+        run: python3 src/check_before_publish.py
 
       - name: Assemble the site
         run: |

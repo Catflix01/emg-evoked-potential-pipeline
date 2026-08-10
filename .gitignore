@@ -45,6 +45,30 @@ docs/*.pdf
 notebooks/*.ipynb
 
 # ---------------------------------------------------------------
+# INTERNAL — working documents, not for the published repository.
+#
+# The repository carries what someone needs to understand and run the tool.
+# These are lab-internal: findings about our own data, notes on what to do
+# next, and material belonging to the lab rather than to this project.
+# All still on disk; only tracking changes.
+# ---------------------------------------------------------------
+docs/security-review.md
+docs/data-needed.md
+docs/next-steps.md
+docs/publishing.md
+docs/WHY-WE-DO-WHAT-WE-DO.docx
+
+# Inherited MATLAB. Kept locally as the reference this pipeline was checked
+# against, but its provenance and licence are not ours to republish. The one
+# thing that matters from it, the formula, is reimplemented and cited in
+# src/compare_legacy.py.
+docs/legacy/
+
+# A scratch script for poking at one recording. Hardcodes channel numbers that
+# the pipeline looks up properly, so it is a bad pattern to hand anyone.
+explore.py
+
+# ---------------------------------------------------------------
 # TESTS — kept out of the repository for now, not deleted.
 #
 # Delete this whole block to publish them again. That is worth doing when the
