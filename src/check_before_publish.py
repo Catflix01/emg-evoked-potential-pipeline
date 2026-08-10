@@ -120,11 +120,12 @@ def main():
                        f"{len(named)} found", not named))
     problems += timestamped + named
 
-    # 4. the demo data should be present, so the published app has something to show
-    demo = list((ROOT / "data" / "demo").rglob("*.csv"))
-    report.append(line("synthetic demo recordings", f"{len(demo)} files", bool(demo)))
-    if not demo:
-        report.append("      (run: python src/make_demo_data.py)")
+    # 4. the demo recordings are excluded on purpose, so their absence is fine either way.
+    #    What matters is that if any exist locally, none of them reached the commit.
+    demo_committed = [p for p in publishable if str(p).startswith("data/")]
+    report.append(line("data/ excluded from the commit",
+                       f"{len(demo_committed)} files would go", not demo_committed))
+    problems += [f"{p} is under data/ and would be committed" for p in demo_committed]
 
     report.append("")
     if problems:

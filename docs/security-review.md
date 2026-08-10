@@ -89,7 +89,7 @@ way, and it agrees exactly.
 You can check this on your own data:
 
 ```bash
-python src/compare_legacy.py --data <your folder>
+python main.py compare --data <your folder>
 ```
 
 It measures each recording both ways from the same file. No MATLAB, nothing uploaded.
@@ -122,9 +122,9 @@ for a recording already sitting in the repository.
 ## Checking any of it yourself
 
 ```bash
-python src/check_before_publish.py                     # what would be committed, and is it safe
-python src/compare_legacy.py --data <folder>           # both versions side by side
-python src/selfcheck.py --data <folder> --anonymise    # a shareable report with no identifiers
+python main.py safe-to-publish                     # what would be committed, and is it safe
+python main.py compare --data <folder>           # both versions side by side
+python main.py check --data <folder> --anonymise    # a shareable report with no identifiers
 python -m pytest                                       # the test suite
 ```
 

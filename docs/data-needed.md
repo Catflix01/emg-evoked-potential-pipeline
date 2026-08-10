@@ -9,7 +9,7 @@ prints a text report containing counts, filename patterns and millisecond values
 samples, no patient details. Sharing that report is enough.
 
 ```bash
-python src/selfcheck.py --data <YOUR FOLDER> > report.txt
+python main.py check --data <YOUR FOLDER> > report.txt
 ```
 
 Replace `<YOUR FOLDER>` with the real location of the recordings, in Terminal, type

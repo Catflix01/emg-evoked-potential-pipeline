@@ -7,8 +7,8 @@ The arrangement that achieves both:
 
 | | where it runs | what data it sees |
 |---|---|---|
-| **Published demo** | Streamlit Community Cloud, public | synthetic recordings only |
-| **Real analysis** | the lab's own machine | real recordings, never uploaded |
+| **Published page** | GitHub Pages, public | none; it asks the visitor for their own |
+| **Real analysis** | whoever's machine has the page open | their own recordings, read in the browser |
 
 ---
 
@@ -26,7 +26,7 @@ the repository clean.
 ## Before publishing, every time
 
 ```bash
-python src/check_before_publish.py
+python main.py safe-to-publish
 ```
 
 It looks at what git would actually commit, not at what `.gitignore` is supposed to say,
@@ -34,7 +34,7 @@ and refuses if it finds recordings, the manifest, or a subject code. It exits no
 problem, so it also works as a pre-commit hook:
 
 ```bash
-echo 'python src/check_before_publish.py' > .git/hooks/pre-commit
+echo 'python main.py safe-to-publish' > .git/hooks/pre-commit
 chmod +x .git/hooks/pre-commit
 ```
 
@@ -69,22 +69,17 @@ The pre-publish check enforces this.
 ## Publishing the demo
 
 ```bash
-python src/make_demo_data.py      # generates data/demo/, synthetic, safe to commit
-python src/check_before_publish.py
+python main.py demo      # generates data/demo/, synthetic, safe to commit
+python main.py safe-to-publish
 ```
 
 Then push to GitHub and, at [share.streamlit.io](https://share.streamlit.io), point Streamlit
 Community Cloud at the repository with `app.py` as the entry point. It installs from
 `requirements.txt` automatically.
 
-The deployed copy detects that `data/raw` is absent and switches to **demo mode**:
-
-- a banner stating the recordings are synthetic;
-- the folder box disabled, on a public host, a free-text path would let any visitor read
-  files on the server.
-
-**Never upload real recordings to the deployed instance.** It is a demonstration. Anyone
-wanting to process real data installs locally.
+The published page is the browser version in `web/`. It carries no recordings at all: the
+visitor chooses files from their own computer, and the Python that measures them runs inside
+their browser. There is no server for anything to be uploaded to.
 
 ### What the demo data is
 
@@ -99,7 +94,7 @@ each file was built with.
 ## Sharing a self-check report
 
 ```bash
-python src/selfcheck.py --data <YOUR FOLDER> --anonymise > report.txt
+python main.py check --data <YOUR FOLDER> --anonymise > report.txt
 ```
 
 The report holds counts, protocol names and millisecond values: no EMG samples. Without
@@ -115,12 +110,12 @@ git clone <repository>
 cd SCISoftwareIntern
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-streamlit run app.py
+python main.py
 ```
 
-With no data present it opens in demo mode. Adding recordings to `data/raw/`, or setting
-`data_root` in `config/params.yaml`, switches it to the real thing, on their machine, under
-their own approvals.
+With no data present it opens asking for a folder. Point it at recordings, or set
+`data_root` in `config/params.yaml`, and it measures those, on their machine and under their
+own approvals.
 
 ---
 

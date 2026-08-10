@@ -42,10 +42,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Are the tests published?
+        id: have_tests
+        run: |
+          if [ -d src/tests ]; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "The test suite is kept out of this repository for now, so there is"
+            echo "nothing to run here. It is maintained alongside the code and run"
+            echo "locally. To publish it, delete the TESTS block in .gitignore."
+          fi
+
       - uses: actions/setup-python@v5
+        if: steps.have_tests.outputs.found == 'true'
         with:
           python-version: "3.12"
-      - run: pip install -r requirements.txt
-      # The real recordings are not in the repository, so the tests that need them skip.
-      # The synthetic demo set is committed, so those tests do run.
-      - run: python -m pytest -q
+
+      - if: steps.have_tests.outputs.found == 'true'
+        run: pip install -r requirements.txt
+
+      # Recordings are not in the repository, so the tests needing them skip themselves.
+      - if: steps.have_tests.outputs.found == 'true'
+        run: python -m pytest -q

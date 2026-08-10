@@ -33,7 +33,7 @@ pip install -r requirements.txt
 **Point-and-click**, pick a folder, adjust the windows, download the results:
 
 ```bash
-streamlit run app.py
+python main.py
 ```
 
 This opens in your browser and runs entirely on your own machine. Nothing is uploaded.
@@ -41,7 +41,7 @@ This opens in your browser and runs entirely on your own machine. Nothing is upl
 **Command line**, processes everything in `data/raw/` and writes to `outputs/`:
 
 ```bash
-python src/harmonize.py
+python main.py process
 ```
 
 Both use the same code in `src/harmonize.py`, so they produce the same numbers.
@@ -56,7 +56,7 @@ Both use the same code in `src/harmonize.py`, so they produce the same numbers.
 The CSV is a view for reading. Anything doing real analysis should read the parquet,
 which also keeps column types (dates stay dates) that a CSV round-trip would lose.
 
-Figures: `python src/visuals.py` writes to `outputs/figures/`.
+Figures: `python main.py figures` writes to `outputs/figures/`.
 
 ## What the columns mean
 
@@ -66,8 +66,8 @@ windows it used, so the numbers are never ambiguous about where they came from.
 ## Checking it against your own data
 
 ```bash
-python src/selfcheck.py                      # checks data/raw
-python src/selfcheck.py --data <YOUR FOLDER> # checks anywhere else
+python main.py check                       # checks the configured folder
+python main.py check --data <YOUR FOLDER> # checks anywhere else
 ```
 
 Replace `<YOUR FOLDER>` with a real path, in Terminal you can type `--data ` and then drag
@@ -84,10 +84,10 @@ and [docs/data-needed.md](docs/data-needed.md) lists what would settle them.
 
 ## Publishing it
 
-See [docs/publishing.md](docs/publishing.md). In short: the app can be published as a public
-demo carrying only synthetic recordings, while real analysis stays on lab machines. Run
-`python src/check_before_publish.py` before any push: it refuses if a recording, the
-manifest, or a subject code would be committed.
+See [docs/publishing.md](docs/publishing.md). In short: the browser version is published as
+a page anyone can open, and it asks for their own recordings; no data of any kind travels
+with it. Run `python main.py safe-to-publish` before any push. It refuses if a recording,
+the manifest, or a subject code would be committed.
 
 ## Documentation
 
@@ -102,9 +102,16 @@ manifest, or a subject code would be committed.
 
 ## Tests
 
+The suite is maintained alongside the code but is **not published in this repository yet**.
+It pins known results from a real recording, so a change that alters any number fails
+loudly, which is deliberate: most edits here should change nothing.
+
+If you have it locally:
+
 ```bash
 python -m pytest
 ```
 
-The suite pins known results from a real recording, so a change that alters any number
-fails loudly. That is deliberate, most edits here should change nothing.
+To publish it, delete the TESTS block in `.gitignore`. Worth doing when this repository
+goes to other labs, since the suite is what makes the numbers checkable by someone else
+rather than taken on trust.

@@ -453,7 +453,8 @@ def data_folder(config, root):
     return Path(configured).expanduser() if configured else root / "data" / "raw"
 
 
-if __name__ == "__main__":
+def main(data=None):
+    """Measure every recording and write the results to outputs/."""
     from joblib import Parallel, delayed  # pyright: ignore[reportMissingImports]
     root = Path(__file__).resolve().parent.parent
     config = yaml.safe_load(open(root/"config"/"params.yaml"))
@@ -461,7 +462,7 @@ if __name__ == "__main__":
                              sheet_name=config.get("manifest_sheet", "draft-pharma"))
     (root/"outputs").mkdir(exist_ok=True)
 
-    source = data_folder(config, root)
+    source = Path(data).expanduser() if data else data_folder(config, root)
     csv_files = find_recordings(source)
     print(f"{len(csv_files)} recordings under {source}")
 
@@ -479,8 +480,11 @@ if __name__ == "__main__":
     write_results(master, root/"outputs")
 
     if skipped:
-        report = pd.DataFrame(skipped)
-        report.to_csv(root/"outputs"/"skipped_files.csv", index=False)
+        pd.DataFrame(skipped).to_csv(root/"outputs"/"skipped_files.csv", index=False)
     print(f"{len(master)} rows from {len(results)} recordings, {len(skipped)} skipped"
-          + (" — see outputs/skipped_files.csv" if skipped else ""))
-    print(f"{len(master)} rows from {len(results)} files")
+          + (", see outputs/skipped_files.csv" if skipped else ""))
+    return master
+
+
+if __name__ == "__main__":
+    main()
