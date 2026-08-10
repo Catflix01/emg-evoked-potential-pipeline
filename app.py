@@ -22,6 +22,7 @@ sys.path.append(str(ROOT / "src"))
 from harmonize import process_file, write_results, READABLE_DECIMALS, find_recordings
 import selfcheck
 import compare_legacy
+import lineups
 
 DEFAULT_MANIFEST = ROOT / "docs" / "Centralized-NIDAQ-System-Pharma-1957-PRIMING.xlsx"
 DEFAULT_DATA = ROOT / "data" / "raw"
@@ -127,14 +128,24 @@ with st.sidebar:
                                      "a participant, or the whole store.")
 
     st.header("2. The channel lineup")
-    if DEMO_MODE:
-        manifest_path = st.text_input("Manifest workbook", value=str(DEMO_MANIFEST))
-        manifest_sheet = st.text_input("Sheet name", value="0",
-                                       help="The demo workbook has a single unnamed sheet.")
-        manifest_sheet = 0 if manifest_sheet.strip() in {"", "0"} else manifest_sheet
+    st.caption("Which muscle each channel holds.")
+    lineup_choice = st.selectbox(
+        "Channel list", list(lineups.PRESETS) + ["From a spreadsheet"],
+        index=list(lineups.PRESETS).index(lineups.DEFAULT))
+
+    chosen_lineup, manifest_path, manifest_sheet = None, None, None
+    if lineup_choice in lineups.PRESETS:
+        chosen_lineup = lineups.PRESETS[lineup_choice]
+        st.caption(lineups.describe(chosen_lineup))
+        st.download_button("Save this lineup", lineups.to_json(chosen_lineup, lineup_choice),
+                           "my-lineup.json", "application/json", width="stretch")
     else:
-        manifest_path = st.text_input("Manifest workbook", value=str(DEFAULT_MANIFEST))
-        manifest_sheet = st.text_input("Sheet name", value="draft-pharma")
+        # the workbook route: still the most accurate here, since it holds the exact
+        # lineup for every session including those that differ from the standard
+        manifest_path = st.text_input("Manifest workbook",
+                                      value=str(DEMO_MANIFEST if DEMO_MODE else DEFAULT_MANIFEST))
+        manifest_sheet = st.text_input("Sheet name", value="0" if DEMO_MODE else "draft-pharma")
+        manifest_sheet = 0 if str(manifest_sheet).strip() in {"", "0"} else manifest_sheet
 
     st.header("3. Measurement settings")
     config = yaml.safe_load(open(DEFAULT_CONFIG))
@@ -153,6 +164,14 @@ with st.sidebar:
                f"({config['windows_ms']['response'].get('PNS', ['—', '—'])[0]}–"
                f"{config['windows_ms']['response'].get('PNS', ['—', '—'])[1]} ms), "
                "because a peripheral M-wave arrives much sooner.")
+
+
+def manifest_or_none():
+    """The workbook, if that route was chosen. A picked lineup needs no workbook."""
+    if chosen_lineup is not None:
+        return None
+    return load_manifest(manifest_path, manifest_sheet)
+
 
 settings = {
     "sampling_rate_hz": sampling_rate,
@@ -193,9 +212,9 @@ with compare_tab:
                "No MATLAB needed; nothing is uploaded.")
     if st.button("Run the comparison"):
         try:
-            manifest = load_manifest(manifest_path, manifest_sheet)
+            manifest = manifest_or_none()
         except Exception as e:
-            st.error(f"Could not read the manifest: {e}")
+            st.error(f"Could not read the channel list: {e}")
         else:
             frames = []
             progress = st.progress(0.0, text="Measuring…")
@@ -238,9 +257,9 @@ with check_tab:
                "The report holds no EMG values and no patient details, so it is safe to share.")
     if st.button("Run the check"):
         try:
-            manifest = load_manifest(manifest_path, manifest_sheet)
+            manifest = manifest_or_none()
         except Exception as e:
-            st.error(f"Could not read the manifest: {e}")
+            st.error(f"Could not read the channel list: {e}")
         else:
             with st.spinner("Checking…"):
                 report = build_report(data_folder, manifest, settings)
@@ -253,9 +272,9 @@ with process_tab:
 
 if run:
     try:
-        manifest = load_manifest(manifest_path, manifest_sheet)
+        manifest = manifest_or_none()
     except Exception as e:
-        st.error(f"Could not read the manifest: {e}")
+        st.error(f"Could not read the channel list: {e}")
         st.stop()
 
     progress = st.progress(0.0, text="Starting…")

@@ -278,13 +278,32 @@ def epoch_features(signal, pulse_start,
     }
 
 
-def process_file(csv_path, manifest, config):
-    # Measure every muscle's response to every pulse in one recording.
+def process_file(csv_path, manifest, config, lineup=None):
+    """Measure every muscle's response to every pulse in one recording.
+
+    `lineup` is which muscle sits on which channel. Given one, it is used as-is, which is
+    how a lineup chosen from a list reaches the pipeline. Left out, it is looked up in the
+    manifest by participant and date, as it always was.
+    """
     meta = parse_filename(csv_path)
     data = pd.read_csv(csv_path, header=None).to_numpy()
-    lineup = get_lineup(meta["_subject_token"], meta["_date_token"], manifest)
+    if lineup is None:
+        lineup = get_lineup(meta["_subject_token"], meta["_date_token"], manifest)
     muscles  = {c: name for c, name in lineup.items() if not name.startswith("trigger")}
     triggers = {c: name for c, name in lineup.items() if name.startswith("trigger")}
+
+    # A lineup that is wrong for this recording does not fail, it mislabels: every number
+    # lands under the wrong muscle and nothing looks amiss. So check the one thing the
+    # recording can prove by itself, that a channel called a muscle is not carrying pulses.
+    threshold = config["trigger_threshold"]
+    firing_muscles = [name for channel, name in muscles.items()
+                      if channel < data.shape[1]
+                      and len(detect_pulses(data[:, channel], threshold))]
+    if firing_muscles:
+        raise ValueError(
+            f"channel(s) named {', '.join(firing_muscles)} carry stimulus pulses, so this "
+            f"lineup does not match {Path(csv_path).name}. Every muscle would be mislabelled."
+        )
 
     # Ask which trigger channels fired, rather than looking the protocol up.
     sampling_rate = config["sampling_rate_hz"]

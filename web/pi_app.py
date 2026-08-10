@@ -20,6 +20,7 @@ sys.path.append("src")
 from harmonize import (process_file, find_recordings, READABLE_DECIMALS,
                        NOT_A_RECORDING)
 import figures
+import lineups
 
 st.set_page_config(page_title="EMG pipeline", page_icon="⚡", layout="wide")
 
@@ -40,29 +41,6 @@ st.info(
     "the same numbers.",
     icon="ℹ️",
 )
-
-
-@st.cache_resource(show_spinner="Getting ready to read spreadsheets…")
-def spreadsheet_support():
-    """Make sure .xlsx files can be read.
-
-    Pyodide does not ship openpyxl, so it is fetched here rather than listed with the
-    other packages. Listed there, a failure would stop the whole app from starting;
-    here it is one feature that can report its own problem.
-    """
-    try:
-        import openpyxl                                        # noqa: F401
-        return True, None
-    except ImportError:
-        pass
-    try:
-        import micropip                                        # only exists in a browser
-        import asyncio
-        asyncio.get_event_loop().run_until_complete(micropip.install("openpyxl"))
-        import openpyxl                                        # noqa: F401
-        return True, None
-    except Exception as e:
-        return False, str(e)
 
 
 @st.cache_data(show_spinner=False)
@@ -154,44 +132,77 @@ elif chosen:
         st.caption(f"Ignoring {len(chosen) - len(recordings)} file(s) that hold stimulus "
                    "intensities rather than EMG.")
 
+@st.cache_resource(show_spinner="Getting ready to read spreadsheets…")
+def spreadsheet_support():
+    """Make sure .xlsx files can be read.
+
+    Pyodide does not ship openpyxl, so it is fetched here rather than listed with the
+    other packages. Listed there, a failure would stop the whole app from starting;
+    here it is one feature that can report its own problem.
+    """
+    try:
+        import openpyxl                                        # noqa: F401
+        return True, None
+    except ImportError:
+        pass
+    try:
+        import micropip                                        # only exists in a browser
+        import asyncio
+        asyncio.get_event_loop().run_until_complete(micropip.install("openpyxl"))
+        import openpyxl                                        # noqa: F401
+        return True, None
+    except Exception as e:
+        return False, str(e)
+
+
 # --------------------------------------------------------------- step 2: the lineup
 st.header("Step 2. Choose the channel list")
-st.caption("The spreadsheet saying which muscle was recorded on which channel. "
-           "A .csv with the same columns works too.")
+st.caption("Which muscle each channel of the recording holds. Pick the one matching how "
+           "your amplifier is wired.")
 
-can_read_excel, excel_problem = spreadsheet_support()
-if not can_read_excel:
-    st.warning(
-        "Spreadsheet (.xlsx) support could not be loaded, so please save your channel "
-        f"list as a .csv and choose that instead. Technical detail: {excel_problem}",
-        icon="⚠️")
+choice = st.selectbox("Channel list", list(lineups.PRESETS) + ["My lineup is not here"],
+                      index=list(lineups.PRESETS).index(lineups.DEFAULT),
+                      label_visibility="collapsed")
 
-manifest_types = (["xlsx", "xls", "csv"] if can_read_excel else ["csv"])
-manifest_file = st.file_uploader(
-    "Channel list", type=manifest_types, label_visibility="collapsed"
-)
-sheet = st.text_input("Sheet name inside that spreadsheet", value="draft-pharma",
-                      disabled=not can_read_excel,
-                      help="Ignored for a .csv, which has only one sheet.")
+lineup = None
+if choice in lineups.PRESETS:
+    lineup = lineups.PRESETS[choice]
+    st.caption(lineups.describe(lineup))
+    with st.expander("Show the channels"):
+        st.dataframe(lineups.as_table(lineup), width="stretch", hide_index=True)
+else:
+    st.caption("Choose your channel-list spreadsheet, or a lineup saved from this tool "
+               "earlier. It is read here and not sent anywhere.")
+    can_read_excel, excel_problem = spreadsheet_support()
+    if not can_read_excel:
+        st.caption(f"Spreadsheets cannot be read here ({excel_problem}), so save your "
+                   "channel list as a .json from the desktop version, or pick a preset.")
+    supplied = st.file_uploader("Your channel list",
+                                type=(["xlsx", "xls", "json"] if can_read_excel else ["json"]),
+                                label_visibility="collapsed")
+    if supplied is not None:
+        try:
+            if supplied.name.lower().endswith(".json"):
+                lineup = lineups.from_json(supplied.getvalue().decode())
+            else:
+                sheet = st.text_input("Sheet name", value="draft-pharma")
+                lineup = lineups.from_workbook(io.BytesIO(supplied.getbuffer()), sheet)
+            st.success(lineups.describe(lineup))
+            st.dataframe(lineups.as_table(lineup), width="stretch", hide_index=True)
+            st.download_button("Save this lineup for next time",
+                               lineups.to_json(lineup, supplied.name),
+                               "my-lineup.json", "application/json")
+        except Exception as e:
+            st.error(f"Could not read that channel list: {e}")
 
 # --------------------------------------------------------------- step 3: run it
 st.header("Step 3. Measure")
 
-if not recordings or manifest_file is None:
-    st.info("Choose your recordings and the channel list above, then this button will work.")
+if not recordings or lineup is None:
+    st.info("Choose your recordings and a channel list above, then this button will work.")
     st.stop()
 
 if st.button(f"Measure {len(recordings)} recording(s)", type="primary"):
-    try:
-        raw = io.BytesIO(manifest_file.getbuffer())
-        if manifest_file.name.lower().endswith(".csv"):
-            manifest = pd.read_csv(raw)
-        else:
-            manifest = pd.read_excel(raw, sheet_name=sheet)
-    except Exception as e:
-        st.error(f"Could not read the channel list: {e}")
-        st.stop()
-
     config = load_config()
     progress = st.progress(0.0, text="Starting")
     tables, skipped = [], []
@@ -202,7 +213,7 @@ if st.button(f"Measure {len(recordings)} recording(s)", type="primary"):
         label = str(path.relative_to(folder_root)) if folder_root else path.name
         progress.progress(i / len(recordings), text=f"{label} ({i} of {len(recordings)})")
         try:
-            tables.append(process_file(path, manifest, config))
+            tables.append(process_file(path, None, config, lineup=lineup))
         except Exception as e:
             skipped.append({"file": label, "reason": str(e)})
     progress.empty()

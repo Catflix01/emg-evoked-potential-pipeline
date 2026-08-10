@@ -53,8 +53,13 @@ files directly instead.
 
 **3. Choose the channel list.**
 
-This is the spreadsheet that says which muscle was recorded on which channel. If the sheet
-inside it is not called `draft-pharma`, type the correct name in the box underneath.
+This says which muscle each channel of the recording holds. Pick the one matching how your
+amplifier is wired from the dropdown; the summary underneath tells you how many muscles it
+covers and which channels carry the stimulus.
+
+If none of them matches, choose **My lineup is not here** and give it your channel-list
+spreadsheet once. It will offer to save that as a small file you can load in one click next
+time.
 
 **4. Click Measure.**
 

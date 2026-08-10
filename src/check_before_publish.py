@@ -120,7 +120,24 @@ def main():
                        f"{len(named)} found", not named))
     problems += timestamped + named
 
-    # 4. the demo recordings are excluded on purpose, so their absence is fine either way.
+    # 4. the shipped lineups must stay what they are: channel numbers and muscle names.
+    #    They are publishable precisely because they carry nothing about a participant.
+    try:
+        sys.path.insert(0, str(ROOT / "src"))
+        import lineups
+        leaked = []
+        for name, lineup in lineups.PRESETS.items():
+            text = f"{name} {lineup}"
+            leaked += [f"the lineup {name!r} contains {m}"
+                       for m in real_only(SUBJECT_CODE, text) + real_only(SUBJECT_WITH_DATE, text)]
+        report.append(line("shipped lineups carry no participant data",
+                           f"{len(lineups.PRESETS)} checked", not leaked))
+        problems += leaked
+    except Exception as e:
+        report.append(line("shipped lineups", f"could not check: {e}", False))
+        problems.append(f"the lineups could not be checked: {e}")
+
+    # 5. the demo recordings are excluded on purpose, so their absence is fine either way.
     #    What matters is that if any exist locally, none of them reached the commit.
     demo_committed = [p for p in publishable if str(p).startswith("data/")]
     report.append(line("data/ excluded from the commit",

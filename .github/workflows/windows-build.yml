@@ -12,7 +12,7 @@
 #     certificate, which costs a few hundred a year.
 #   - The download is large, in the region of 300-400 MB, because it carries Python and
 #     every library with it.
-name: build the Windows download
+name: build the downloads
 
 on:
   push:
@@ -75,3 +75,52 @@ jobs:
           "Download it from the Artifacts section of this run."
           "Windows will warn that it is unrecognised: click More info, then Run anyway."
           "That warning appears for any program without a paid signing certificate."
+
+  mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install the project and PyInstaller
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build
+        run: |
+          pyinstaller --windowed --name EMG-Pipeline \
+            --collect-all streamlit \
+            --collect-all pandas \
+            --collect-all matplotlib \
+            --collect-all seaborn \
+            --collect-data openpyxl \
+            --add-data "src:src" \
+            --add-data "config:config" \
+            --add-data "web/pi_app.py:." \
+            launcher.py
+
+      - name: Check it at least starts
+        run: |
+          ./dist/EMG-Pipeline.app/Contents/MacOS/EMG-Pipeline &
+          sleep 45
+          if curl -sf http://localhost:8501 >/dev/null; then
+            echo "the app answered on port 8501"
+          else
+            echo "the bundle built but did not answer. It is not ready to hand to anyone."
+            exit 1
+          fi
+
+      - name: Zip it, so the bundle survives being downloaded
+        if: always()
+        run: cd dist && zip -qr EMG-Pipeline-Mac.zip EMG-Pipeline.app
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: EMG-Pipeline-Mac
+          path: dist/EMG-Pipeline-Mac.zip
+          retention-days: 90
