@@ -13,7 +13,7 @@ Open the published page, choose your recordings, and read the results. The Pytho
 inside your own browser, so recordings are read from your machine and never sent anywhere.
 Works on Windows and Mac, needs no terminal and no admin rights.
 
-[**docs/for-the-pi.md**](docs/for-the-pi.md) is the one-page guide for anyone using it this
+[**docs/forPIs.md**](docs/for-the-pi.md) is the one-page guide for anyone using it this
 way. The link to the page itself appears once GitHub Pages is switched on for the
 repository, under Settings, Pages.
 
