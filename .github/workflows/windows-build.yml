@@ -15,7 +15,9 @@
 name: build the Windows download
 
 on:
-  workflow_dispatch:      # deliberately manual: this is not ready to run on every push
+  push:
+    branches: [main]      # so a downloadable build always exists, and packaging
+  workflow_dispatch:      # problems surface now rather than months from now
   release:
     types: [published]
 
@@ -61,6 +63,15 @@ jobs:
           }
 
       - uses: actions/upload-artifact@v4
+        if: always()          # upload even if the smoke test failed, so it can be examined
         with:
           name: EMG-Pipeline-Windows
           path: dist/EMG-Pipeline.exe
+          retention-days: 90
+
+      - name: Where to find it
+        if: success()
+        run: |
+          "Download it from the Artifacts section of this run."
+          "Windows will warn that it is unrecognised: click More info, then Run anyway."
+          "That warning appears for any program without a paid signing certificate."

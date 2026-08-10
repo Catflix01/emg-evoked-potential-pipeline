@@ -33,6 +33,13 @@ st.success(
     "browser. Nothing is sent over the internet and nothing is stored anywhere else.",
     icon="🔒",
 )
+st.info(
+    "**This page is for looking at a few recordings.** A browser can hold a few hundred "
+    "megabytes, so a whole session or participant is too big for it. For those, use the "
+    "downloadable version, which reads folders straight off your hard drive. Both give "
+    "the same numbers.",
+    icon="ℹ️",
+)
 
 
 @st.cache_resource(show_spinner="Getting ready to read spreadsheets…")
@@ -110,7 +117,24 @@ def unpack(zip_bytes, name):
     return target, find_recordings(target)
 
 
+# A browser holds the uploaded bytes once, again unzipped, and again as numbers while
+# measuring. Past roughly this much the tab stops responding, so it is better to say so
+# than to let someone watch it die.
+BROWSER_LIMIT_MB = 250
+
 recordings, folder_root = [], None
+
+if zipped is not None and zipped.size > BROWSER_LIMIT_MB * 1024 * 1024:
+    st.error(
+        f"That folder is **{zipped.size / 1024 / 1024 / 1024:.1f} GB**, which is more than "
+        "a web browser can open.\n\n"
+        "This page is for looking at a few recordings at a time. For whole sessions, "
+        "participants or the entire study, use the downloadable version: it reads folders "
+        "straight off your hard drive, so size stops mattering and nothing is copied.\n\n"
+        "If you only want a look, zip one of the folders inside instead, such as a single "
+        "stimulation type.",
+        icon="📦")
+    zipped = None
 
 if zipped is not None:
     folder_root, recordings = unpack(zipped.getbuffer().tobytes(), zipped.name)

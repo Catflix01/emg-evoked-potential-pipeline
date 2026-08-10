@@ -64,6 +64,26 @@ elif STARTING_FOLDER is None:
         icon="📂")
 
 
+def pick_folder():
+    """Open the operating system's folder chooser.
+
+    tkinter ships with Python, so it is inside the packaged Windows download too. This
+    is what lets someone who has never opened a terminal point the tool at their data.
+    """
+    try:
+        import tkinter as tk
+        from tkinter import filedialog
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes("-topmost", True)      # otherwise it opens behind the browser
+        chosen = filedialog.askdirectory(title="Choose the folder holding your recordings")
+        root.destroy()
+        return chosen or None
+    except Exception:
+        # no desktop available, e.g. running on a server; the text box still works
+        return None
+
+
 @st.cache_data(show_spinner=False)
 def load_manifest(path, sheet):
     """Read the channel lineup workbook. Cached so it isn't re-read on every click."""
@@ -87,13 +107,24 @@ def build_report(folder, manifest, settings):
 
 # ---------------------------------------------------------------- settings
 with st.sidebar:
-    # This app runs on the machine it is installed on, so a free-text path is fine.
-    # The published version is the browser app in web/, which uses a file picker.
+    # This app runs on the machine it is installed on, so it can read folders directly.
+    # That is the whole reason it handles a session the browser version cannot: nothing
+    # is uploaded or copied, the recordings are read where they sit.
     st.header("1. Where the data is")
+
+    if "chosen_folder" not in st.session_state:
+        st.session_state.chosen_folder = str(STARTING_FOLDER or "")
+
+    if st.button("Browse for a folder…", width="stretch"):
+        picked = pick_folder()
+        if picked:
+            st.session_state.chosen_folder = picked
+
     data_folder = st.text_input("Folder of recordings",
-                                value=str(STARTING_FOLDER or ""),
+                                value=st.session_state.chosen_folder,
                                 placeholder="path to a folder of .csv recordings",
-                                help="Subfolders are searched too.")
+                                help="Subfolders are searched too. Point it at a session, "
+                                     "a participant, or the whole store.")
 
     st.header("2. The channel lineup")
     if DEMO_MODE:

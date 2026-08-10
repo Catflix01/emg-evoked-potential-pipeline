@@ -7,11 +7,18 @@ in a pre-stimulus window and a response window.
 Recordings and the channel-lineup workbook are never part of this repository: they are
 human-subjects material. Everything here runs on data you supply.
 
-## Nothing to install: use it in a browser
+## Two ways to run it without a terminal
 
-Open the published page, choose your recordings, and read the results. The Python runs
-inside your own browser, so recordings are read from your machine and never sent anywhere.
-Works on Windows and Mac, needs no terminal and no admin rights.
+**The Windows download**, for real work. Reads folders straight off the disk, so a whole
+session or participant is no problem. Built by GitHub Actions on every push; grab it from
+the Artifacts of the latest *build the Windows download* run. **Not yet verified by anyone
+on Windows.**
+
+**The browser page**, for a quick look at a few recordings. The Python runs inside your own
+browser, so nothing is uploaded, but a browser can only hold a few hundred megabytes, which
+is less than one session here.
+
+Both run the same pipeline and give the same numbers.
 
 [**docs/forPIs.md**](docs/forPIs.md) is the one-page guide for anyone using it this
 way. The link to the page itself appears once GitHub Pages is switched on for the

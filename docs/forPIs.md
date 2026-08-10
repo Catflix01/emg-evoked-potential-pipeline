@@ -4,7 +4,19 @@ This turns raw EMG recordings into one organised table, with a row for every mus
 every stimulus pulse. You can look at the results on screen and download them as a
 spreadsheet.
 
-There is nothing to install and nothing to set up.
+There are two ways to run it, and which you want depends on how much data you have.
+
+| | what it is for | how you get it |
+|---|---|---|
+| **The download** | whole sessions, participants, the entire study | one file from the project's Releases page, then double-click |
+| **The web page** | a quick look at a handful of recordings | open a link, nothing to install |
+
+They run the same code and give the same numbers.
+
+**Sessions are large.** One is close to a gigabyte, which is far more than a web browser can
+hold. So for real work use the download: it reads recordings straight off your hard drive
+rather than loading them into a browser, and size stops being a problem. The web page is for
+when you want to glance at a few files without installing anything.
 
 ---
 
