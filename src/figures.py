@@ -9,11 +9,30 @@ Nothing here imports pyarrow or joblib, so it runs in a browser as well as a ter
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
 from matplotlib.colors import LogNorm
 from matplotlib.ticker import ScalarFormatter, NullFormatter, NullLocator
 
-sns.set_theme(style="whitegrid", context="talk")
+# The three figures the browser version shows are drawn with matplotlib alone, because
+# seaborn has no build in Pyodide and requiring it stops the whole app from starting.
+# The richer extras below still use it, and import it only when called.
+plt.rcParams.update({
+    "axes.grid": True, "grid.color": "white", "grid.linewidth": 1.2,
+    "axes.facecolor": "#eaeaf2", "axes.edgecolor": "none",
+    "axes.titlesize": 15, "axes.labelsize": 12, "figure.facecolor": "white",
+})
+
+
+def _seaborn():
+    """Import seaborn only where it is genuinely needed, with a useful message."""
+    try:
+        import seaborn as sns
+    except ImportError as e:
+        raise ImportError(
+            "This figure needs seaborn, which has no browser build. It is available "
+            "in the command-line version: python main.py figures"
+        ) from e
+    sns.set_theme(style="whitegrid", context="talk")
+    return sns
 
 
 def plain_log(axis):
@@ -42,10 +61,20 @@ def response_by_muscle(df, value_col="auc", title=None):
     A log axis because response sizes run from noise to several volts, and a linear
     axis would flatten every small muscle against zero.
     """
-    order = muscle_order(df, value_col)
+    order = list(muscle_order(df, value_col))
+    values = [df.loc[df.muscle == m, value_col].dropna().to_numpy() for m in order]
     fig, ax = plt.subplots(figsize=(9, 8))
     ax.set_xscale("log")
-    sns.boxplot(data=df, y="muscle", x=value_col, order=order, ax=ax, showfliers=False)
+    box = ax.boxplot(values, vert=False, showfliers=False, patch_artist=True,
+                     tick_labels=order, widths=0.6)
+    for patch in box["boxes"]:
+        patch.set_facecolor("#4c72b0")
+        patch.set_alpha(.85)
+    for part in ("medians", "whiskers", "caps"):
+        for line in box[part]:
+            line.set_color("#2a2a2a")
+    ax.invert_yaxis()                      # largest response at the top
+    ax.set_xlabel(value_col)
     ax.set_title(title or f"Response size ({value_col}) by muscle")
     plain_log(ax.xaxis)
     fig.tight_layout()
@@ -63,9 +92,23 @@ def muscle_by_protocol(df, value_col="auc", cmap="viridis", fmt=".0f", title=Non
                             aggfunc="median").reindex(order))
     pivot = pivot.mask(pivot <= 0)          # a log colour scale cannot show 0
     fig, ax = plt.subplots(figsize=(9, 8))
-    sns.heatmap(pivot, annot=True, fmt=fmt, cmap=cmap, norm=LogNorm(), ax=ax,
-                linewidths=0.5, linecolor="white", cbar_kws={"label": f"median {value_col}"})
-    tidy_colorbar(ax)
+    values = np.ma.masked_invalid(pivot.to_numpy(dtype=float))
+    image = ax.imshow(values, cmap=cmap, aspect="auto",
+                      norm=LogNorm(vmin=np.nanmin(pivot.to_numpy()),
+                                   vmax=np.nanmax(pivot.to_numpy())))
+    ax.set_xticks(range(len(pivot.columns)), pivot.columns, rotation=45, ha="right")
+    ax.set_yticks(range(len(pivot.index)), pivot.index)
+    ax.grid(False)
+    # the number in each cell, so the figure can be read without the colour bar
+    for row in range(values.shape[0]):
+        for col in range(values.shape[1]):
+            if not np.ma.is_masked(values[row, col]):
+                ax.text(col, row, format(values[row, col], fmt),
+                        ha="center", va="center", fontsize=9,
+                        color="white" if values[row, col] < np.nanmedian(pivot) else "black")
+    bar = fig.colorbar(image, ax=ax, label=f"median {value_col}")
+    plain_log(bar.ax.yaxis)
+    bar.ax.yaxis.set_minor_locator(NullLocator())
     ax.set_title(title or f"Median {value_col}: muscle by protocol")
     fig.tight_layout()
     return fig, pivot
@@ -79,7 +122,13 @@ def pk_pk_against_auc(df, title=None):
     """
     positive = df[(df["pk_pk"] > 0) & (df["auc"] > 0)]
     fig, ax = plt.subplots(figsize=(8, 7))
-    sns.scatterplot(data=positive, x="pk_pk", y="auc", hue="protocol", alpha=0.6, ax=ax)
+    for colour, (protocol, group) in zip(
+            plt.rcParams["axes.prop_cycle"].by_key()["color"] * 4,
+            positive.groupby("protocol")):
+        ax.scatter(group["pk_pk"], group["auc"], label=protocol, alpha=0.6, s=22, color=colour)
+    ax.legend(title="protocol", fontsize=9)
+    ax.set_xlabel("pk_pk")
+    ax.set_ylabel("auc")
     ax.set_xscale("log")
     ax.set_yscale("log")
     plain_log(ax.xaxis)
@@ -113,6 +162,7 @@ def one_epoch(signal, pulse_start, sampling_rate, prestim_ms, response_ms,
 
 def spread_by_muscle(df, value_col="auc", title=None):
     """The spread per muscle, with every individual pulse drawn on top."""
+    sns = _seaborn()
     order = muscle_order(df, value_col)
     fig, ax = plt.subplots(figsize=(9, 8))
     sns.violinplot(data=df, y="muscle", x=value_col, order=order, inner=None,
@@ -130,6 +180,7 @@ def mean_by_muscle(df, value_col="auc", title=None):
 
     Bars need a true zero, so this one is not logged.
     """
+    sns = _seaborn()
     order = muscle_order(df, value_col)
     fig, ax = plt.subplots(figsize=(9, 8))
     sns.barplot(data=df, y="muscle", x=value_col, order=order, ax=ax)
@@ -140,6 +191,7 @@ def mean_by_muscle(df, value_col="auc", title=None):
 
 def muscles_clustered(pivot, title=None):
     """Muscles grouped by the shape of their response across protocols."""
+    sns = _seaborn()
     data = pivot.dropna(how="all").fillna(0)     # clustering cannot take blanks
     grid = sns.clustermap(data, standard_scale=0, cmap="viridis", figsize=(8, 9),
                           linewidths=0.5, cbar_kws={"label": "per-muscle, 0-1"})
@@ -149,6 +201,7 @@ def muscles_clustered(pivot, title=None):
 
 def feature_pairs(df, title=None):
     """How the measurements relate to each other, logged because they are skewed."""
+    sns = _seaborn()
     data = df.loc[(df["pk_pk"] > 0) & (df["auc"] > 0),
                   ["pk_pk", "auc", "baseline", "protocol"]].copy()
     data["pk_pk"] = np.log10(data["pk_pk"])

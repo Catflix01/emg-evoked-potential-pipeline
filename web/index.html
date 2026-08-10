@@ -60,8 +60,11 @@
 
     mount(
       {
-        // pyarrow and joblib have no browser build; neither is needed here.
-        requirements: ["pandas", "numpy", "matplotlib", "seaborn", "openpyxl", "pyyaml", "scipy"],
+        // Only packages Pyodide itself ships. If one of these cannot be resolved the
+        // whole install fails and nothing is available, not even pandas, so anything
+        // pure-Python that Pyodide lacks (openpyxl) is installed by the app instead,
+        // where a failure can be caught and explained.
+        requirements: ["pandas", "numpy", "matplotlib", "pyyaml"],
         entrypoint: "pi_app.py",
         files,
       },

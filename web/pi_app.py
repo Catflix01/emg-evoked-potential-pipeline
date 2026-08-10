@@ -33,6 +33,29 @@ st.success(
 )
 
 
+@st.cache_resource(show_spinner="Getting ready to read spreadsheets…")
+def spreadsheet_support():
+    """Make sure .xlsx files can be read.
+
+    Pyodide does not ship openpyxl, so it is fetched here rather than listed with the
+    other packages. Listed there, a failure would stop the whole app from starting;
+    here it is one feature that can report its own problem.
+    """
+    try:
+        import openpyxl                                        # noqa: F401
+        return True, None
+    except ImportError:
+        pass
+    try:
+        import micropip                                        # only exists in a browser
+        import asyncio
+        asyncio.get_event_loop().run_until_complete(micropip.install("openpyxl"))
+        import openpyxl                                        # noqa: F401
+        return True, None
+    except Exception as e:
+        return False, str(e)
+
+
 @st.cache_data(show_spinner=False)
 def load_config():
     return yaml.safe_load(open("config/params.yaml"))
@@ -58,11 +81,23 @@ if chosen and len(recordings) < len(chosen):
 
 # --------------------------------------------------------------- step 2: the lineup
 st.header("Step 2. Choose the channel list")
-st.caption("The spreadsheet saying which muscle was recorded on which channel.")
+st.caption("The spreadsheet saying which muscle was recorded on which channel. "
+           "A .csv with the same columns works too.")
+
+can_read_excel, excel_problem = spreadsheet_support()
+if not can_read_excel:
+    st.warning(
+        "Spreadsheet (.xlsx) support could not be loaded, so please save your channel "
+        f"list as a .csv and choose that instead. Technical detail: {excel_problem}",
+        icon="⚠️")
+
+manifest_types = (["xlsx", "xls", "csv"] if can_read_excel else ["csv"])
 manifest_file = st.file_uploader(
-    "Channel list", type=["xlsx", "xls"], label_visibility="collapsed"
+    "Channel list", type=manifest_types, label_visibility="collapsed"
 )
-sheet = st.text_input("Sheet name inside that spreadsheet", value="draft-pharma")
+sheet = st.text_input("Sheet name inside that spreadsheet", value="draft-pharma",
+                      disabled=not can_read_excel,
+                      help="Ignored for a .csv, which has only one sheet.")
 
 # --------------------------------------------------------------- step 3: run it
 st.header("Step 3. Measure")
@@ -73,7 +108,11 @@ if not recordings or manifest_file is None:
 
 if st.button(f"Measure {len(recordings)} recording(s)", type="primary"):
     try:
-        manifest = pd.read_excel(io.BytesIO(manifest_file.getbuffer()), sheet_name=sheet)
+        raw = io.BytesIO(manifest_file.getbuffer())
+        if manifest_file.name.lower().endswith(".csv"):
+            manifest = pd.read_csv(raw)
+        else:
+            manifest = pd.read_excel(raw, sheet_name=sheet)
     except Exception as e:
         st.error(f"Could not read the channel list: {e}")
         st.stop()
