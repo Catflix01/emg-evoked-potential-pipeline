@@ -1,11 +1,11 @@
-"""Start the app and open it in a browser. Used by the packaged Windows download.
+"""Start the app and open it in a browser. Used by the packaged Windows and Mac downloads.
 
 Someone double-clicks the program, this starts Streamlit and opens the page. There is no
 terminal involved, which is the whole point of the packaged version.
 
-The browser version at docs/for-the-pi.md does the same job without any download, and is
-the one that has actually been tested. This exists for people who would rather have a
-program on their machine.
+The browser version does the same job without any download, but it can only hold a few
+recordings at a time. The downloads read folders straight off the disk, which is what a
+whole session needs. docs/forPIs.md says which to use when.
 """
 import os
 import sys
@@ -43,6 +43,10 @@ def main():
     root = app_directory()
     os.chdir(root)
     sys.path.insert(0, str(root / "src"))
+
+    # Streamlit treats its own files not being in site-packages as "in development", which
+    # is exactly how a packaged app looks, and then refuses to accept a port.
+    os.environ.setdefault("STREAMLIT_GLOBAL_DEVELOPMENT_MODE", "false")
 
     threading.Thread(target=open_browser_when_ready, daemon=True).start()
 

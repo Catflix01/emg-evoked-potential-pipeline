@@ -1,10 +1,10 @@
-# Build a downloadable Windows version and attach it to a release.
+# Build the downloadable Windows and Mac versions and attach them to a release.
 #
-# UNVERIFIED. This workflow has never produced an executable that anyone has run. It was
-# written on a Mac, where a Windows executable cannot be built or tested, so the first
-# person to download it is also the first person to find out whether it works. Until
-# somebody confirms it on an actual Windows machine, point people at the browser version
-# instead: it needs no download, no install and no security exception.
+# The Mac bundle has been built and run on an Apple-silicon Mac: it serves the page and
+# executes the app. The Windows executable has still never been run by anyone, because a
+# Windows build cannot be tested from a Mac. Until somebody confirms it on an actual
+# Windows machine, point Windows users at the browser version, which needs no download,
+# no install and no security exception.
 #
 # Two things to expect even when it does work:
 #   - Windows shows "Windows protected your PC" for any unsigned program. The user has to
@@ -49,16 +49,35 @@ jobs:
             --add-data "web/pi_app.py;." `
             launcher.py
 
-      - name: Check it at least starts
+      # Two separate questions. A server that answers is not the same as an app that runs:
+      # with a data file missing from the bundle the port still answers 200 while the app
+      # opens to an error page, so the second check is the one that matters.
+      - name: Check it starts, and that the app itself runs
         run: |
-          Start-Process -FilePath "dist\EMG-Pipeline.exe" -PassThru | Out-Null
-          Start-Sleep -Seconds 45
+          $env:STREAMLIT_SERVER_SCRIPT_HEALTH_CHECK_ENABLED = "true"
+          Start-Process -FilePath "dist\EMG-Pipeline.exe" `
+            -RedirectStandardOutput app.log -RedirectStandardError app.err
+          $answered = $false
+          for ($i = 1; $i -le 40; $i++) {
+            Start-Sleep -Seconds 3
+            try {
+              $h = Invoke-WebRequest "http://localhost:8501/_stcore/health" -UseBasicParsing -TimeoutSec 5
+              if ($h.StatusCode -eq 200) { $answered = $true; break }
+            } catch { }
+          }
+          if (-not $answered) {
+            "the executable built but never answered on port 8501. What it printed:"
+            Get-Content app.log, app.err -ErrorAction SilentlyContinue
+            exit 1
+          }
+          "answered after about $($i * 3) seconds"
           try {
-            $r = Invoke-WebRequest -Uri "http://localhost:8501" -UseBasicParsing -TimeoutSec 20
-            if ($r.StatusCode -eq 200) { "the app answered on port 8501" }
-            else { throw "unexpected status $($r.StatusCode)" }
+            $r = Invoke-WebRequest "http://localhost:8501/_stcore/script-health-check" `
+                   -UseBasicParsing -TimeoutSec 120
+            "the app ran without error: $($r.Content)"
           } catch {
-            "the executable built but did not answer. It is not ready to hand to anyone."
+            "the server started but the app itself failed to run. What it printed:"
+            Get-Content app.log, app.err -ErrorAction SilentlyContinue
             exit 1
           }
 
@@ -103,14 +122,31 @@ jobs:
             --add-data "web/pi_app.py:." \
             launcher.py
 
-      - name: Check it at least starts
+      - name: Check it starts, and that the app itself runs
         run: |
-          ./dist/EMG-Pipeline.app/Contents/MacOS/EMG-Pipeline &
-          sleep 45
-          if curl -sf http://localhost:8501 >/dev/null; then
-            echo "the app answered on port 8501"
+          export STREAMLIT_SERVER_SCRIPT_HEALTH_CHECK_ENABLED=true
+          ./dist/EMG-Pipeline.app/Contents/MacOS/EMG-Pipeline > app.log 2>&1 &
+          answered=no
+          for i in $(seq 1 40); do
+            sleep 3
+            if curl -sf http://localhost:8501/_stcore/health >/dev/null; then
+              echo "answered after about $((i * 3)) seconds"
+              answered=yes
+              break
+            fi
+          done
+          if [ "$answered" = no ]; then
+            echo "the bundle built but never answered on port 8501. What it printed:"
+            cat app.log
+            exit 1
+          fi
+          # this one actually executes pi_app.py, so a missing module or data file fails here
+          if curl -sf --max-time 120 http://localhost:8501/_stcore/script-health-check; then
+            echo ""
+            echo "the app ran without error"
           else
-            echo "the bundle built but did not answer. It is not ready to hand to anyone."
+            echo "the server started but the app itself failed to run. What it printed:"
+            cat app.log
             exit 1
           fi
 
