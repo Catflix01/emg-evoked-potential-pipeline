@@ -1,0 +1,44 @@
+{
+  "what_this_is": "The channel lineups the tool offers. A lineup says which muscle each channel holds and which channels carry the stimulus trigger. It describes how an amplifier was wired, so it is the same for every participant and says nothing about anyone.",
+  "where_these_came_from": "Lineups in real use, with every participant and date dropped. What remains is a channel number and a muscle name.",
+  "why_this_is_a_plain_file": "The pre-publish check reads it with nothing but the standard library, so it can run on any machine before anything is installed.",
+  "trigger_prefix": "trigger",
+  "lineups": [
+    {
+      "name": "Upper limb, bilateral (14 muscles, spinal + cortical triggers)",
+      "channels": {
+        "2": "LBB", "3": "RBB", "4": "LTB", "5": "RTB", "6": "LFCR", "7": "RFCR",
+        "8": "LECR", "9": "RECR", "10": "LAPB", "11": "RAPB", "12": "LFDI",
+        "14": "RFDI", "15": "LADM", "16": "RADM",
+        "17": "trigger_tscs", "18": "trigger_tms"
+      }
+    },
+    {
+      "name": "Upper limb, bilateral (14 muscles, separate peripheral trigger)",
+      "channels": {
+        "2": "LBB", "3": "RBB", "4": "LTB", "5": "RTB", "6": "LFCR", "7": "RFCR",
+        "8": "LECR", "9": "RECR", "10": "LAPB", "11": "RAPB", "12": "LFDI",
+        "13": "RFDI", "14": "LADM", "15": "RADM",
+        "16": "trigger_tscs", "17": "trigger_peripheral", "18": "trigger_tms"
+      }
+    },
+    {
+      "name": "Upper limb, bilateral (14 muscles plus a force channel)",
+      "channels": {
+        "2": "LBB", "3": "RBB", "4": "LTB", "5": "RTB", "6": "LFCR", "7": "RFCR",
+        "8": "LECR", "9": "RECR", "10": "LAPB", "11": "RAPB", "12": "LFDI",
+        "13": "FORCE_BK", "14": "RFDI", "15": "LADM", "16": "RADM",
+        "17": "trigger_tscs", "18": "trigger_tms"
+      }
+    },
+    {
+      "name": "Upper limb with force and pinch (triggers on channels 8 and 10)",
+      "channels": {
+        "3": "RBB", "4": "LTB", "5": "RTB", "6": "PINCH_BIOM", "7": "LFCR",
+        "8": "trigger_tscs", "9": "RFCR", "10": "trigger_tms", "11": "LECR",
+        "12": "RECR", "13": "LAPB", "14": "RAPB", "15": "LFDI", "16": "GRIP_BIOM",
+        "17": "RFDI", "18": "LADM"
+      }
+    }
+  ]
+}

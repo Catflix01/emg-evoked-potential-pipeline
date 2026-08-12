@@ -7,7 +7,12 @@ would *actually* commit — not at what .gitignore is supposed to say — and re
 finds subject codes, recordings, or the manifest.
 
 Exits 0 when safe, 1 when not, so it can also be used as a pre-commit hook.
+
+This file uses nothing but the standard library, on purpose. It is the one thing that has to
+run on any machine before anything is installed, so it must never need pandas or anything
+else. src/tests/test_publish_check.py holds that line.
 """
+import json
 import re
 import subprocess
 import sys
@@ -122,16 +127,17 @@ def main():
 
     # 4. the shipped lineups must stay what they are: channel numbers and muscle names.
     #    They are publishable precisely because they carry nothing about a participant.
+    #    Read straight out of the file rather than through src/lineups.py, so this check
+    #    keeps needing nothing but Python and can run before anything is installed.
     try:
-        sys.path.insert(0, str(ROOT / "src"))
-        import lineups
+        stored = json.loads((ROOT / "src" / "lineups.json").read_text())
         leaked = []
-        for name, lineup in lineups.PRESETS.items():
-            text = f"{name} {lineup}"
-            leaked += [f"the lineup {name!r} contains {m}"
+        for entry in stored["lineups"]:
+            text = f"{entry['name']} {entry['channels']}"
+            leaked += [f"the lineup {entry['name']!r} contains {m}"
                        for m in real_only(SUBJECT_CODE, text) + real_only(SUBJECT_WITH_DATE, text)]
         report.append(line("shipped lineups carry no participant data",
-                           f"{len(lineups.PRESETS)} checked", not leaked))
+                           f"{len(stored['lineups'])} checked", not leaked))
         problems += leaked
     except Exception as e:
         report.append(line("shipped lineups", f"could not check: {e}", False))

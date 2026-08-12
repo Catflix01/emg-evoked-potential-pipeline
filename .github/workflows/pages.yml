@@ -44,13 +44,25 @@ jobs:
           # only the modules the browser app imports; nothing that needs pyarrow,
           # joblib or a terminal
           cp src/harmonize.py src/cusum.py src/figures.py site/src/
+          cp src/lineups.py src/lineups.json site/src/
           cp config/params.yaml site/config/
 
+      # The list of files is read out of index.html rather than repeated here, because a
+      # second copy of a list drifts: a module added to the page and not to the copy
+      # publishes a page that fails on its first import.
       - name: Check every file the page asks for is present
         run: |
-          for f in index.html pi_app.py src/harmonize.py src/cusum.py src/figures.py config/params.yaml; do
-            test -f "site/$f" || { echo "missing from the site: $f"; exit 1; }
-          done
+          python3 - <<'PY'
+          import re, sys
+          from pathlib import Path
+          block = re.search(r"const sourceFiles = \[(.*?)\]",
+                            Path("web/index.html").read_text(), re.S).group(1)
+          asked_for = ["index.html"] + re.findall(r'"([^"]+)"', block)
+          missing = [f for f in asked_for if not (Path("site") / f).exists()]
+          for f in missing:
+              print(f"missing from the site: {f}")
+          sys.exit(1 if missing else 0)
+          PY
           echo "all referenced files present"
 
       - name: Confirm no recording was swept into the site

@@ -11,41 +11,28 @@ information.
 
 If none of these matches your setup, the tool can read one out of a spreadsheet or a saved
 file, and it then behaves like any other entry in the list.
+
+The lineups themselves live in lineups.json beside this file, as plain data. That is so the
+pre-publish check can read them using nothing but the standard library, which lets it run
+before anything is installed.
 """
 import json
 from pathlib import Path
 
-import pandas as pd
+PRESET_FILE = Path(__file__).with_name("lineups.json")
+
+
+def read_preset_file(path=PRESET_FILE):
+    """The presets as they sit in the file: names, and channel numbers as numbers."""
+    stored = json.loads(Path(path).read_text())
+    return stored["trigger_prefix"], {
+        entry["name"]: {int(c): name for c, name in entry["channels"].items()}
+        for entry in stored["lineups"]
+    }
+
 
 # Anything not starting with this is treated as a muscle.
-TRIGGER_PREFIX = "trigger"
-
-PRESETS = {
-    "Upper limb, bilateral (14 muscles, spinal + cortical triggers)": {
-        2: "LBB", 3: "RBB", 4: "LTB", 5: "RTB", 6: "LFCR", 7: "RFCR",
-        8: "LECR", 9: "RECR", 10: "LAPB", 11: "RAPB", 12: "LFDI",
-        14: "RFDI", 15: "LADM", 16: "RADM",
-        17: "trigger_tscs", 18: "trigger_tms",
-    },
-    "Upper limb, bilateral (14 muscles, separate peripheral trigger)": {
-        2: "LBB", 3: "RBB", 4: "LTB", 5: "RTB", 6: "LFCR", 7: "RFCR",
-        8: "LECR", 9: "RECR", 10: "LAPB", 11: "RAPB", 12: "LFDI",
-        13: "RFDI", 14: "LADM", 15: "RADM",
-        16: "trigger_tscs", 17: "trigger_peripheral", 18: "trigger_tms",
-    },
-    "Upper limb, bilateral (14 muscles plus a force channel)": {
-        2: "LBB", 3: "RBB", 4: "LTB", 5: "RTB", 6: "LFCR", 7: "RFCR",
-        8: "LECR", 9: "RECR", 10: "LAPB", 11: "RAPB", 12: "LFDI",
-        13: "FORCE_BK", 14: "RFDI", 15: "LADM", 16: "RADM",
-        17: "trigger_tscs", 18: "trigger_tms",
-    },
-    "Upper limb with force and pinch (triggers on channels 8 and 10)": {
-        3: "RBB", 4: "LTB", 5: "RTB", 6: "PINCH_BIOM", 7: "LFCR",
-        8: "trigger_tscs", 9: "RFCR", 10: "trigger_tms", 11: "LECR",
-        12: "RECR", 13: "LAPB", 14: "RAPB", 15: "LFDI", 16: "GRIP_BIOM",
-        17: "RFDI", 18: "LADM",
-    },
-}
+TRIGGER_PREFIX, PRESETS = read_preset_file()
 
 DEFAULT = next(iter(PRESETS))
 
@@ -58,13 +45,17 @@ def describe(lineup):
            f"triggers: {', '.join(t.replace('trigger_', '') for t in triggers)}"
 
 
-def as_table(lineup):
+def as_rows(lineup):
     """The lineup laid out for display: one row per channel, in channel order."""
-    return pd.DataFrame(
-        [{"channel": c, "what is on it": name,
-          "kind": "stimulus trigger" if name.startswith(TRIGGER_PREFIX) else "muscle"}
-         for c, name in sorted(lineup.items())]
-    )
+    return [{"channel": c, "what is on it": name,
+             "kind": "stimulus trigger" if name.startswith(TRIGGER_PREFIX) else "muscle"}
+            for c, name in sorted(lineup.items())]
+
+
+def as_table(lineup):
+    """The same rows as a table, for the apps to show."""
+    import pandas as pd
+    return pd.DataFrame(as_rows(lineup))
 
 
 def from_workbook(path_or_buffer, sheet_name=0, participant=None, date=None):
@@ -73,6 +64,7 @@ def from_workbook(path_or_buffer, sheet_name=0, participant=None, date=None):
     Takes the first row, or the row for a given participant and date if both are given.
     Only the channel columns are read; nothing else in the sheet is kept.
     """
+    import pandas as pd
     table = pd.read_excel(path_or_buffer, sheet_name=sheet_name)
     if participant is not None and date is not None:
         wanted = (table["Participant"] == participant) & (table["Date"] == date)
