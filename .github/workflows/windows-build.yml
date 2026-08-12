@@ -21,6 +21,10 @@ on:
   release:
     types: [published]
 
+# needed to attach the built files to a release
+permissions:
+  contents: write
+
 jobs:
   windows:
     runs-on: windows-latest
@@ -36,6 +40,12 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
 
+      # The folder chooser is the whole point of the download for someone who does not
+      # use a terminal. It only reaches the build if this interpreter has tkinter, so a
+      # loud failure here beats shipping a button that does nothing.
+      - name: Check this build will have a folder chooser
+        run: python -c "import tkinter; print('tkinter present:', tkinter.TkVersion)"
+
       - name: Build
         run: |
           pyinstaller --onefile --name EMG-Pipeline `
@@ -43,10 +53,11 @@ jobs:
             --collect-all pandas `
             --collect-all matplotlib `
             --collect-all seaborn `
+            --collect-all pyarrow `
             --collect-data openpyxl `
             --add-data "src;src" `
             --add-data "config;config" `
-            --add-data "web/pi_app.py;." `
+            --add-data "app.py;." `
             launcher.py
 
       # Two separate questions. A server that answers is not the same as an app that runs:
@@ -88,10 +99,20 @@ jobs:
           path: dist/EMG-Pipeline.exe
           retention-days: 90
 
+      # An Actions artifact can only be downloaded by someone signed in to GitHub. A file
+      # attached to a release is a plain link anyone can click, which is what a colleague
+      # without a GitHub account needs.
+      - name: Attach it to the release
+        if: github.event_name == 'release'
+        run: gh release upload "${{ github.event.release.tag_name }}" dist/EMG-Pipeline.exe --clobber
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
       - name: Where to find it
         if: success()
         run: |
-          "Download it from the Artifacts section of this run."
+          "Signed in to GitHub? The Artifacts section of this run."
+          "Otherwise it needs to come from a release, which needs no account."
           "Windows will warn that it is unrecognised: click More info, then Run anyway."
           "That warning appears for any program without a paid signing certificate."
 
@@ -109,6 +130,9 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
 
+      - name: Check this build will have a folder chooser
+        run: python3 -c "import tkinter; print('tkinter present:', tkinter.TkVersion)"
+
       - name: Build
         run: |
           pyinstaller --windowed --name EMG-Pipeline \
@@ -116,10 +140,11 @@ jobs:
             --collect-all pandas \
             --collect-all matplotlib \
             --collect-all seaborn \
+            --collect-all pyarrow \
             --collect-data openpyxl \
             --add-data "src:src" \
             --add-data "config:config" \
-            --add-data "web/pi_app.py:." \
+            --add-data "app.py:." \
             launcher.py
 
       - name: Check it starts, and that the app itself runs
@@ -160,3 +185,9 @@ jobs:
           name: EMG-Pipeline-Mac
           path: dist/EMG-Pipeline-Mac.zip
           retention-days: 90
+
+      - name: Attach it to the release
+        if: github.event_name == 'release'
+        run: gh release upload "${{ github.event.release.tag_name }}" dist/EMG-Pipeline-Mac.zip --clobber
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

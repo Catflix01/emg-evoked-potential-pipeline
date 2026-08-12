@@ -8,7 +8,7 @@ There are two ways to run it, and which you want depends on how much data you ha
 
 | | what it is for | how you get it |
 |---|---|---|
-| **The download** | whole sessions, participants, the entire study | one file from the project's Releases page, then double-click |
+| **The download** | whole sessions, participants, the entire study | one file from the project's Releases page, then double-click. No account needed |
 | **The web page** | a quick look at a handful of recordings | open a link, nothing to install |
 
 They run the same code and give the same numbers.
@@ -31,7 +31,38 @@ browser, and your data never travels the other way.
 
 ---
 
-## Using it
+## Using the download
+
+**1. Get it and open it.**
+
+From the Releases page, take `EMG-Pipeline.exe` on Windows or `EMG-Pipeline-Mac.zip` on a
+Mac. There is nothing to install: double-click it and it opens in your web browser, which
+is only how it draws its screen. Everything runs on your own machine.
+
+The first time you open it, your computer will warn you that it does not recognise the
+program. On Windows, click **More info**, then **Run anyway**. On a Mac, right-click the
+app and choose **Open**, then **Open** again. Both warnings appear for any program without
+a paid signing certificate, which costs a few hundred a year.
+
+**2. Point it at your recordings.**
+
+Click **Browse for a folder…** and choose the folder holding them: a session, a
+participant, or the whole store. Everything below it is searched, so you can give it the
+top folder and leave it. Nothing is copied or uploaded; the files are read where they sit,
+which is why size does not matter here.
+
+If the button does not open a chooser, paste the folder's path into the box underneath.
+
+**3. Choose the channel list**, exactly as described below, then click **Process
+recordings**.
+
+You also get two extra tabs: **Check my data**, which reports what it found without
+measuring anything, and **Compare with the old pipeline**, which measures every recording
+both the old MATLAB way and the new way so the two can be compared.
+
+---
+
+## Using the web page
 
 **1. Open the link.**
 
@@ -93,9 +124,9 @@ the reason for each one. The most common are that the channel list has no entry 
 participant and date, or that no stimulus was detected in the file.
 
 **Two columns are empty.** `session` and `experiment` come from the names of the folders
-your recordings sit in. If you used the *A few files* tab they will be blank, because a
+your recordings sit in. On the web page's *A few files* tab they will be blank, because a
 file picker hands over files without their folders. Giving it a zipped folder instead fills
-them in.
+them in, and the download always has them because it reads the folders directly.
 
 **The numbers look wrong.** Check the figure showing one recorded response with the
 measurement windows shaded on it. If the green window is not sitting over the response,

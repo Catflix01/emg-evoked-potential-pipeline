@@ -68,20 +68,29 @@ elif STARTING_FOLDER is None:
 def pick_folder():
     """Open the operating system's folder chooser.
 
-    tkinter ships with Python, so it is inside the packaged Windows download too. This
-    is what lets someone who has never opened a terminal point the tool at their data.
+    This is what lets someone who has never opened a terminal point the tool at their
+    data. When it cannot open, it says so: a button that does nothing when clicked is
+    worse than one that explains itself, and the box below always works.
     """
     try:
         import tkinter as tk
         from tkinter import filedialog
-        root = tk.Tk()
-        root.withdraw()
-        root.attributes("-topmost", True)      # otherwise it opens behind the browser
+    except ImportError:
+        st.warning("This copy of the app was built without a folder chooser. Type or "
+                   "paste the folder in the box below instead.", icon="📂")
+        return None
+
+    try:
+        chooser = tk.Tk()
+        chooser.withdraw()
+        chooser.attributes("-topmost", True)   # otherwise it opens behind the browser
         chosen = filedialog.askdirectory(title="Choose the folder holding your recordings")
-        root.destroy()
+        chooser.destroy()
         return chosen or None
-    except Exception:
-        # no desktop available, e.g. running on a server; the text box still works
+    except Exception as e:
+        # no desktop available, e.g. running on a server
+        st.warning(f"The folder chooser would not open ({e}). Type or paste the folder "
+                   "in the box below instead.", icon="📂")
         return None
 
 

@@ -52,7 +52,9 @@ def main():
 
     from streamlit.web import cli
     sys.argv = [
-        "streamlit", "run", str(root / "pi_app.py"),
+        # app.py, not the browser version: this one can open a folder chooser and read
+        # recordings where they sit, which is the whole reason to download anything.
+        "streamlit", "run", str(root / "app.py"),
         f"--server.port={PORT}",
         "--server.address=localhost",     # this computer only, never the network
         "--server.headless=true",
