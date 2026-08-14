@@ -8,12 +8,30 @@ recordings at a time. The downloads read folders straight off the disk, which is
 whole session needs. docs/forPIs.md says which to use when.
 """
 import os
+import socket
 import sys
 import threading
 import webbrowser
 from pathlib import Path
 
-PORT = 8501
+FIRST_PORT = 8501
+
+
+def free_port(first=FIRST_PORT, tries=20):
+    """A port nothing is listening on yet.
+
+    Opening a second copy while one is already running used to hand the browser back to
+    the copy already there, which looks like the app ignoring you. Each copy takes its
+    own port instead.
+    """
+    for port in range(first, first + tries):
+        with socket.socket() as probe:
+            if probe.connect_ex(("127.0.0.1", port)) != 0:
+                return port
+    return first
+
+
+PORT = free_port()
 
 
 def app_directory():
