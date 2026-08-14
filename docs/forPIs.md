@@ -39,10 +39,25 @@ From the Releases page, take `EMG-Pipeline.exe` on Windows or `EMG-Pipeline-Mac.
 Mac. There is nothing to install: double-click it and it opens in your web browser, which
 is only how it draws its screen. Everything runs on your own machine.
 
-The first time you open it, your computer will warn you that it does not recognise the
-program. On Windows, click **More info**, then **Run anyway**. On a Mac, right-click the
-app and choose **Open**, then **Open** again. Both warnings appear for any program without
-a paid signing certificate, which costs a few hundred a year.
+The first time, your computer will refuse to open it, because the program does not carry a
+paid signing certificate. Nothing is wrong with it: your computer simply has no way to
+check who made it. Telling it you trust the program is a one-off, and the steps differ by
+system.
+
+**On Windows:** click **More info**, then **Run anyway**.
+
+**On a Mac**, unzip the file, then:
+
+1. Double-click the app. macOS says it cannot verify the app is free of malware. Click
+   **Done**.
+2. Open **System Settings**, then **Privacy & Security**.
+3. Scroll down to **Security**. There is a line saying the app was blocked, with an
+   **Open Anyway** button. Click it.
+4. Confirm with your fingerprint or password, then click **Open Anyway** once more.
+
+Do steps 2 to 4 shortly after step 1, because that button only appears for a while after
+the app was blocked. If you find older instructions saying to right-click the app and
+choose Open, that stopped working in macOS 15; the steps above are the current way.
 
 **2. Point it at your recordings.**
 
