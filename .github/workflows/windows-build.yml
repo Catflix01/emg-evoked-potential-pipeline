@@ -175,9 +175,27 @@ jobs:
             exit 1
           fi
 
-      - name: Zip it, so the bundle survives being downloaded
+      # ditto rather than zip. A Mac app is a folder held together by symlinks — 546 of
+      # them here — and `zip -r` follows a symlink and stores a copy of what it points
+      # at. That flattens Python.framework, macOS then reports "bundle format is
+      # ambiguous", and what the person downloading it sees is a plain folder with no
+      # app to open. ditto is Apple's own archiver and keeps them. It also halves the
+      # download, since the copies are what made it large.
+      - name: Pack it, so the bundle survives being downloaded
         if: always()
-        run: cd dist && zip -qr EMG-Pipeline-Mac.zip EMG-Pipeline.app
+        run: cd dist && ditto -c -k --sequesterRsrc --keepParent EMG-Pipeline.app EMG-Pipeline-Mac.zip
+
+      - name: Unpack it again and confirm it is still an app
+        if: always()
+        run: |
+          mkdir -p roundtrip && ditto -x -k dist/EMG-Pipeline-Mac.zip roundtrip
+          links=$(find roundtrip/EMG-Pipeline.app -type l | wc -l | tr -d ' ')
+          echo "symlinks that survived: $links"
+          if [ "$links" -eq 0 ]; then
+            echo "the archive flattened the symlinks; this would download as a folder"
+            exit 1
+          fi
+          codesign -v --verbose=2 roundtrip/EMG-Pipeline.app
 
       - uses: actions/upload-artifact@v4
         if: always()
