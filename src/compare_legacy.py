@@ -53,11 +53,16 @@ def legacy_features(signal, pulse_start, prestim, response):
     }
 
 
-def compare_recording(csv_path, manifest, config):
-    """Measure one recording both ways, one row per muscle per pulse."""
+def compare_recording(csv_path, manifest, config, lineup=None):
+    """Measure one recording both ways, one row per muscle per pulse.
+
+    `lineup` behaves as it does in process_file: given one it is used, otherwise the
+    manifest is consulted.
+    """
     meta = parse_filename(csv_path)
     data = pd.read_csv(csv_path, header=None).to_numpy()
-    lineup = get_lineup(meta["_subject_token"], meta["_date_token"], manifest)
+    if lineup is None:
+        lineup = get_lineup(meta["_subject_token"], meta["_date_token"], manifest)
     muscles = {c: n for c, n in lineup.items() if not n.startswith("trigger")}
     triggers = {c: n for c, n in lineup.items() if n.startswith("trigger")}
 

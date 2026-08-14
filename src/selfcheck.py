@@ -113,12 +113,12 @@ def check_protocol_folders(recordings, has_sessions, label=None):
     return lines
 
 
-def check_recordings(recordings, manifest, config):
+def check_recordings(recordings, manifest, config, lineup=None):
     """Process everything and summarise triggers, skips and timing."""
     tables, skips = [], []
     for recording in recordings:
         try:
-            tables.append(process_file(recording, manifest, config))
+            tables.append(process_file(recording, manifest, config, lineup=lineup))
         except Exception as e:
             skips.append({"protocol": recording.name.split("_")[3:5], "reason": str(e)})
 

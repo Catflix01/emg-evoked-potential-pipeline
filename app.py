@@ -48,6 +48,9 @@ def folder_with_recordings():
 STARTING_FOLDER = folder_with_recordings()
 DEMO_MODE = STARTING_FOLDER == DEMO_DATA
 
+config = yaml.safe_load(open(DEFAULT_CONFIG))
+WORK_IT_OUT = "Work it out from my recordings"
+
 st.set_page_config(page_title="EMG pipeline (installed)", page_icon="⚡", layout="wide")
 st.title("EMG pipeline")
 st.caption("The installed version. Measures every muscle's response to every stimulus "
@@ -159,12 +162,25 @@ def pick_folder_the_old_way():
 
 
 @st.cache_data(show_spinner=False)
+def recordings_in(folder):
+    """The recordings under a folder, or none if it does not exist yet."""
+    path = Path(folder).expanduser() if folder.strip() else None
+    return find_recordings(path) if path and path.exists() else []
+
+
+@st.cache_data(show_spinner="Reading a few recordings to see which channel list fits…")
+def which_lineups_fit(folder):
+    """Cached on the folder, so it reads the files once rather than on every click."""
+    return lineups.that_fit(recordings_in(folder), config)
+
+
+@st.cache_data(show_spinner=False)
 def load_manifest(path, sheet):
     """Read the channel lineup workbook. Cached so it isn't re-read on every click."""
     return pd.read_excel(path, sheet_name=sheet)
 
 
-def build_report(folder, manifest, settings):
+def build_report(folder, manifest, settings, lineup=None):
     """The same self-check the command-line tool prints, as one block of text."""
     recordings = find_recordings(folder)
     has_sessions = any(selfcheck.session_from_path(r)["experiment"] is not None
@@ -172,7 +188,7 @@ def build_report(folder, manifest, settings):
     lines = [f"EMG PIPELINE SELF-CHECK", f"  {len(recordings)} recordings under {folder}"]
     lines += selfcheck.check_folders(recordings)
     lines += selfcheck.check_protocol_folders(recordings, has_sessions)
-    lines += selfcheck.check_recordings(recordings, manifest, settings)[0]
+    lines += selfcheck.check_recordings(recordings, manifest, settings, lineup)[0]
     lines += [selfcheck.heading("PROVISIONAL COLUMNS"),
               "  These have never been checked against data known to be correct:",
               "    " + ", ".join(selfcheck.PROVISIONAL)]
@@ -200,19 +216,39 @@ with st.sidebar:
                                 help="Subfolders are searched too. Point it at a session, "
                                      "a participant, or the whole store.")
 
+    found_recordings = recordings_in(data_folder)
+
     st.header("2. The channel lineup")
     st.caption("Which muscle each channel holds.")
     lineup_choice = st.selectbox(
-        "Channel list", list(lineups.PRESETS) + ["From a spreadsheet"],
-        index=list(lineups.PRESETS).index(lineups.DEFAULT))
+        "Channel list", [WORK_IT_OUT] + list(lineups.PRESETS) + ["From a spreadsheet"])
 
     chosen_lineup, manifest_path, manifest_sheet = None, None, None
+
+    if lineup_choice == WORK_IT_OUT and found_recordings:
+        # The recording says which channels carry stimulus pulses, so a list that calls
+        # one of them a muscle is provably the wrong list for this equipment.
+        fitting = which_lineups_fit(data_folder)
+        if fitting:
+            lineup_choice = fitting[0]
+            st.success(f"**{lineup_choice}**", icon="✅")
+            st.caption("Chosen because the channels carrying stimulus pulses in your "
+                       "recordings match it. Pick one yourself above if you would rather.")
+        else:
+            st.error(
+                "None of the built-in channel lists matches these recordings: the "
+                "channels carrying stimulus pulses are not where any of them expect. "
+                "Choose **From a spreadsheet** and give it your own channel list.",
+                icon="🔌")
+    elif lineup_choice == WORK_IT_OUT:
+        st.caption("Choose a folder above and this will work out which list fits.")
+
     if lineup_choice in lineups.PRESETS:
         chosen_lineup = lineups.PRESETS[lineup_choice]
         st.caption(lineups.describe(chosen_lineup))
         st.download_button("Save this lineup", lineups.to_json(chosen_lineup, lineup_choice),
                            "my-lineup.json", "application/json", width="stretch")
-    else:
+    elif lineup_choice != WORK_IT_OUT:
         # the workbook route: still the most accurate here, since it holds the exact
         # lineup for every session including those that differ from the standard
         manifest_path = st.text_input("Manifest workbook",
@@ -221,7 +257,6 @@ with st.sidebar:
         manifest_sheet = 0 if str(manifest_sheet).strip() in {"", "0"} else manifest_sheet
 
     st.header("3. Measurement settings")
-    config = yaml.safe_load(open(DEFAULT_CONFIG))
     sampling_rate = st.number_input("Sampling rate (Hz)", value=config["sampling_rate_hz"], step=100)
     trigger_threshold = st.number_input("Trigger threshold (V)",
                                         value=float(config["trigger_threshold"]), step=0.5)
@@ -243,6 +278,9 @@ def manifest_or_none():
     """The workbook, if that route was chosen. A picked lineup needs no workbook."""
     if chosen_lineup is not None:
         return None
+    if manifest_path is None:
+        raise ValueError("No channel list chosen yet: pick one in the sidebar, or let it "
+                         "be worked out from the recordings.")
     return load_manifest(manifest_path, manifest_sheet)
 
 
@@ -294,7 +332,8 @@ with compare_tab:
             for i, rec in enumerate(recordings, start=1):
                 progress.progress(i / len(recordings), text=f"{rec.name} ({i}/{len(recordings)})")
                 try:
-                    frames.append(compare_legacy.compare_recording(rec, manifest, settings))
+                    frames.append(compare_legacy.compare_recording(
+                        rec, manifest, settings, lineup=chosen_lineup))
                 except Exception as e:
                     st.warning(f"skipped {rec.name}: {e}")
             progress.empty()
@@ -335,7 +374,7 @@ with check_tab:
             st.error(f"Could not read the channel list: {e}")
         else:
             with st.spinner("Checking…"):
-                report = build_report(data_folder, manifest, settings)
+                report = build_report(data_folder, manifest, settings, chosen_lineup)
             st.code(report, language="text")
             st.download_button("Download report.txt", report, "report.txt", "text/plain")
 
@@ -356,14 +395,30 @@ if run:
     for i, recording in enumerate(recordings, start=1):
         progress.progress(i / len(recordings), text=f"{recording.name}  ({i} of {len(recordings)})")
         try:
-            frames.append(process_file(recording, manifest, settings))
+            frames.append(process_file(recording, manifest, settings,
+                                       lineup=chosen_lineup))
         except Exception as e:
             skipped.append({"file": recording.name, "reason": str(e)})
 
     progress.empty()
 
     if not frames:
-        st.error("Nothing could be processed. See the skipped list below.")
+        # By far the most common cause, and the least obvious from a list of reasons:
+        # the wrong channel list. Say that plainly rather than making it be deduced.
+        if all("does not match" in row["reason"] for row in skipped):
+            fitting = which_lineups_fit(data_folder)
+            st.error(
+                f"**The channel list is wrong for these recordings.** `{lineup_choice}` "
+                "says a muscle sits on a channel that is actually carrying stimulus "
+                "pulses, so every measurement would come out under the wrong muscle. "
+                "Nothing was measured rather than measured wrongly.\n\n"
+                + (f"**Choose _{fitting[0]}_ instead**, which does match."
+                   if fitting else
+                   "None of the built-in lists matches these recordings either, so the "
+                   "channel list needs to come from your own spreadsheet."),
+                icon="🔌")
+        else:
+            st.error("Nothing could be processed. See the reasons below.")
         st.dataframe(pd.DataFrame(skipped), width="stretch")
         st.stop()
 

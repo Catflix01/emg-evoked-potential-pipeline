@@ -45,6 +45,64 @@ def describe(lineup):
            f"triggers: {', '.join(t.replace('trigger_', '') for t in triggers)}"
 
 
+def channels_carrying_pulses(csv_path, config):
+    """Which channels of a recording carry stimulus pulses.
+
+    The recording answers this by itself, which is what makes it possible to say whether
+    a channel list matches without knowing anything about the study.
+    """
+    import numpy as np
+    import pandas as pd
+    from harmonize import detect_pulses
+
+    data = pd.read_csv(csv_path, header=None).to_numpy()
+    threshold = config["trigger_threshold"]
+    return {channel for channel in range(data.shape[1])
+            if len(detect_pulses(data[:, channel], threshold))}
+
+
+def fits(lineup, firing_channels):
+    """Does this channel list agree with what actually fired?
+
+    Two ways it can disagree: a channel it calls a muscle is carrying pulses, or none of
+    the channels it calls triggers fired at all. Either means the numbers would come out
+    under the wrong muscle names.
+    """
+    muscles = {c for c, name in lineup.items() if not name.startswith(TRIGGER_PREFIX)}
+    triggers = {c for c, name in lineup.items() if name.startswith(TRIGGER_PREFIX)}
+    return not (muscles & firing_channels) and bool(triggers & firing_channels)
+
+
+def a_spread_of(recordings, most=5):
+    """A few recordings from across the list, rather than the first few.
+
+    Reading every file in a study would take longer than the measuring does, and the
+    first few are often all one protocol, which would not exercise the trigger channels.
+    """
+    recordings = list(recordings)
+    if len(recordings) <= most:
+        return recordings
+    step = len(recordings) / most
+    return [recordings[int(i * step)] for i in range(most)]
+
+
+def that_fit(recordings, config, candidates=None, most=5):
+    """The channel lists consistent with these recordings.
+
+    Ordered as the presets are, so the first is the one to offer. An empty result means
+    no shipped list matches this equipment, and the lineup has to come from a spreadsheet.
+
+    Only a sample is read, so this stays quick on a whole study. Any recording the chosen
+    list turns out not to fit is still caught when it is measured.
+    """
+    candidates = PRESETS if candidates is None else candidates
+    firing = [channels_carrying_pulses(r, config) for r in a_spread_of(recordings, most)]
+    if not firing:
+        return []
+    return [name for name, lineup in candidates.items()
+            if all(fits(lineup, fired) for fired in firing)]
+
+
 def as_rows(lineup):
     """The lineup laid out for display: one row per channel, in channel order."""
     return [{"channel": c, "what is on it": name,

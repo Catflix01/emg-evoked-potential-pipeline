@@ -160,17 +160,40 @@ st.header("Step 2. Choose the channel list")
 st.caption("Which muscle each channel of the recording holds. Pick the one matching how "
            "your amplifier is wired.")
 
-choice = st.selectbox("Channel list", list(lineups.PRESETS) + ["My lineup is not here"],
-                      index=list(lineups.PRESETS).index(lineups.DEFAULT),
+WORK_IT_OUT = "Work it out from my recordings"
+
+choice = st.selectbox("Channel list",
+                      [WORK_IT_OUT] + list(lineups.PRESETS) + ["My lineup is not here"],
                       label_visibility="collapsed")
 
 lineup = None
+
+if choice == WORK_IT_OUT and recordings:
+    # Each recording says which channels carry stimulus pulses, so a list calling one of
+    # them a muscle is provably wrong for this equipment.
+    paths = [r for r in recordings if isinstance(r, Path)]
+    if not paths:
+        st.caption("Pick a zipped folder above to have this worked out, or choose a "
+                   "list yourself.")
+    else:
+        fitting = lineups.that_fit(paths, load_config())
+        if fitting:
+            choice = fitting[0]
+            st.success(f"**{choice}**", icon="✅")
+            st.caption("Chosen because the channels carrying stimulus pulses in your "
+                       "recordings match it. Pick one yourself if you would rather.")
+        else:
+            st.error("None of the built-in channel lists matches these recordings. "
+                     "Choose **My lineup is not here** and supply your own.", icon="🔌")
+elif choice == WORK_IT_OUT:
+    st.caption("Choose your recordings above and this will work out which list fits.")
+
 if choice in lineups.PRESETS:
     lineup = lineups.PRESETS[choice]
     st.caption(lineups.describe(lineup))
     with st.expander("Show the channels"):
         st.dataframe(lineups.as_table(lineup), width="stretch", hide_index=True)
-else:
+elif choice != WORK_IT_OUT:
     st.caption("Choose your channel-list spreadsheet, or a lineup saved from this tool "
                "earlier. It is read here and not sent anywhere.")
     can_read_excel, excel_problem = spreadsheet_support()
