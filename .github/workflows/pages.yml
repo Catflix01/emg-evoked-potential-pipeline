@@ -40,24 +40,31 @@ jobs:
       - name: Assemble the site
         run: |
           mkdir -p site/src site/config
-          cp web/index.html web/pi_app.py site/
+          cp web/index.html web/style.css web/script.js web/pi_app.py site/
           # only the modules the browser app imports; nothing that needs pyarrow,
           # joblib or a terminal
           cp src/harmonize.py src/cusum.py src/figures.py site/src/
           cp src/lineups.py src/lineups.json site/src/
           cp config/params.yaml site/config/
 
-      # The list of files is read out of index.html rather than repeated here, because a
-      # second copy of a list drifts: a module added to the page and not to the copy
-      # publishes a page that fails on its first import.
+      # The list of files is read out of the page's own source rather than repeated here,
+      # because a second copy of a list drifts: a module added to the page and not to the
+      # copy publishes a page that fails on its first import. Anything the HTML pulls in
+      # by src= or href= is picked up too, so splitting the page into more files cannot
+      # quietly leave one of them behind.
       - name: Check every file the page asks for is present
         run: |
           python3 - <<'PY'
           import re, sys
           from pathlib import Path
-          block = re.search(r"const sourceFiles = \[(.*?)\]",
-                            Path("web/index.html").read_text(), re.S).group(1)
-          asked_for = ["index.html"] + re.findall(r'"([^"]+)"', block)
+          html = Path("web/index.html").read_text()
+          attached = re.findall(r'(?:src|href)="([^":]+)"', html)
+          listing = re.search(r"const sourceFiles = \[(.*?)\]",
+                              Path("web/script.js").read_text(), re.S)
+          if not listing:
+              print("web/script.js no longer declares sourceFiles"); sys.exit(1)
+          block = listing.group(1)
+          asked_for = ["index.html"] + attached + re.findall(r'"([^"]+)"', block)
           missing = [f for f in asked_for if not (Path("site") / f).exists()]
           for f in missing:
               print(f"missing from the site: {f}")

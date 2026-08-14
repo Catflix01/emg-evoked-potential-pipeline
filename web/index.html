@@ -9,22 +9,7 @@
        that in-browser Python and never sent to a server; there is no server.
        Version 1.x bundles its own styles into the script, so there is no stylesheet. -->
 
-  <style>
-    :root { color-scheme: light dark; }
-    body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
-    #loading {
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      height: 100vh; gap: 1rem; padding: 2rem; text-align: center;
-    }
-    #loading h1 { margin: 0; font-size: 1.5rem; font-weight: 600; }
-    #loading p { margin: 0; max-width: 34rem; line-height: 1.6; opacity: .8; }
-    .spinner {
-      width: 2.5rem; height: 2.5rem; border: 3px solid currentColor;
-      border-top-color: transparent; border-radius: 50%; opacity: .4;
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div id="loading">
@@ -41,46 +26,6 @@
 
   <div id="root"></div>
 
-  <script type="module">
-    import { mount } from "https://cdn.jsdelivr.net/npm/@stlite/browser@1.8.1/build/stlite.js";
-
-    // Fetched from this same folder, so the browser app runs the identical Python
-    // that the command-line version does.
-    const sourceFiles = [
-      "pi_app.py",
-      "src/harmonize.py",
-      "src/cusum.py",
-      "src/figures.py",
-      "src/lineups.py",
-      "src/lineups.json",
-      "config/params.yaml",
-    ];
-
-    const files = Object.fromEntries(
-      sourceFiles.map((path) => [path, { url: path }])
-    );
-
-    mount(
-      {
-        // Only packages Pyodide itself ships. If one of these cannot be resolved the
-        // whole install fails and nothing is available, not even pandas, so anything
-        // pure-Python that Pyodide lacks (openpyxl) is installed by the app instead,
-        // where a failure can be caught and explained.
-        requirements: ["pandas", "numpy", "matplotlib", "pyyaml"],
-        entrypoint: "pi_app.py",
-        files,
-      },
-      document.getElementById("root")
-    );
-
-    // the placeholder disappears once Streamlit has painted
-    const root = document.getElementById("root");
-    new MutationObserver((_, observer) => {
-      if (root.childElementCount > 0) {
-        document.getElementById("loading").remove();
-        observer.disconnect();
-      }
-    }).observe(root, { childList: true, subtree: true });
-  </script>
+  <script type="module" src="script.js"></script>
 </body>
 </html>
