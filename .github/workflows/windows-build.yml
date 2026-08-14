@@ -40,10 +40,11 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
 
-      # The folder chooser is the whole point of the download for someone who does not
-      # use a terminal. It only reaches the build if this interpreter has tkinter, so a
-      # loud failure here beats shipping a button that does nothing.
-      - name: Check this build will have a folder chooser
+      # Windows and Mac open their own folder chooser as a separate program, so nothing
+      # needs to be bundled for it. tkinter is only the fallback for systems without
+      # one, which is why this reports rather than fails.
+      - name: Note whether the fallback folder chooser is available
+        continue-on-error: true
         run: python -c "import tkinter; print('tkinter present:', tkinter.TkVersion)"
 
       - name: Build

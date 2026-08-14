@@ -9,6 +9,8 @@ This is only a front end: every measurement comes from src/harmonize.py, the sam
 code the command line uses. If this app and the command line ever disagree, that is
 a bug, not a setting.
 """
+import os
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -46,10 +48,17 @@ def folder_with_recordings():
 STARTING_FOLDER = folder_with_recordings()
 DEMO_MODE = STARTING_FOLDER == DEMO_DATA
 
-st.set_page_config(page_title="EMG pipeline", page_icon="⚡", layout="wide")
+st.set_page_config(page_title="EMG pipeline (installed)", page_icon="⚡", layout="wide")
 st.title("EMG pipeline")
-st.caption("Measures every muscle's response to every stimulus pulse. "
-           "Runs entirely on the machine it is installed on, no data leaves it.")
+st.caption("The installed version. Measures every muscle's response to every stimulus "
+           "pulse.")
+st.info(
+    "**This is the program on your computer, not a website.** It draws its screen in a "
+    "web browser, which is why the address bar says `localhost` — that word means this "
+    "machine. Nothing is being sent anywhere.\n\n"
+    "Because it runs here, it reads recordings straight off your hard drive: point it at "
+    "a session, a participant, or the whole store, with no size limit.",
+    icon="💻")
 
 if DEMO_MODE:
     st.info(
@@ -65,12 +74,68 @@ elif STARTING_FOLDER is None:
         icon="📂")
 
 
-def pick_folder():
-    """Open the operating system's folder chooser.
+CHOOSE_FOLDER_ON_MAC = '''
+set chosen to choose folder with prompt "Choose the folder holding your recordings"
+POSIX path of chosen
+'''
 
-    This is what lets someone who has never opened a terminal point the tool at their
-    data. When it cannot open, it says so: a button that does nothing when clicked is
-    worse than one that explains itself, and the box below always works.
+CHOOSE_FOLDER_ON_WINDOWS = '''
+Add-Type -AssemblyName System.Windows.Forms
+$chooser = New-Object System.Windows.Forms.FolderBrowserDialog
+$chooser.Description = "Choose the folder holding your recordings"
+if ($chooser.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+    Write-Output $chooser.SelectedPath
+}
+'''
+
+
+def folder_chooser_command():
+    """The command that opens this computer's folder chooser, or None if it has none.
+
+    Each system already ships one, so nothing has to be installed for this to work.
+    """
+    if sys.platform == "darwin":
+        return ["osascript", "-e", CHOOSE_FOLDER_ON_MAC]
+    if os.name == "nt":
+        return ["powershell", "-NoProfile", "-STA", "-Command", CHOOSE_FOLDER_ON_WINDOWS]
+    return None
+
+
+def pick_folder():
+    """Open the folder chooser and return what was picked, or None.
+
+    The chooser runs as a separate program rather than inside this one. A dialog has to
+    own its program's main thread, and this app's main thread is busy serving the page,
+    so opening one here freezes the app instead of showing a window.
+
+    Clicking Cancel is not a problem, so it says nothing and changes nothing.
+    """
+    command = folder_chooser_command()
+    if command is None:
+        return pick_folder_the_old_way()
+
+    quietly = {"creationflags": subprocess.CREATE_NO_WINDOW} if os.name == "nt" else {}
+    try:
+        # generous, but bounded: someone who walks away should not wedge the app
+        finished = subprocess.run(command, capture_output=True, text=True,
+                                  timeout=300, **quietly)
+    except subprocess.TimeoutExpired:
+        st.warning("The folder window was left open too long. Click Browse again, or "
+                   "paste the folder in the box below.", icon="📂")
+        return None
+    except OSError as e:
+        st.warning(f"The folder chooser would not open ({e}). Type or paste the folder "
+                   "in the box below instead.", icon="📂")
+        return None
+
+    return finished.stdout.strip().splitlines()[0] if finished.stdout.strip() else None
+
+
+def pick_folder_the_old_way():
+    """For systems with no chooser of their own, such as Linux.
+
+    In-process, so it carries the freezing problem described above. It stays only
+    because the alternative on those systems is no button at all.
     """
     try:
         import tkinter as tk
@@ -88,7 +153,6 @@ def pick_folder():
         chooser.destroy()
         return chosen or None
     except Exception as e:
-        # no desktop available, e.g. running on a server
         st.warning(f"The folder chooser would not open ({e}). Type or paste the folder "
                    "in the box below instead.", icon="📂")
         return None

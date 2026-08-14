@@ -66,7 +66,11 @@ participant, or the whole store. Everything below it is searched, so you can giv
 top folder and leave it. Nothing is copied or uploaded; the files are read where they sit,
 which is why size does not matter here.
 
-If the button does not open a chooser, paste the folder's path into the box underneath.
+The chooser is a separate window, so it can open *behind* the browser. If nothing seems to
+happen, look for it in your Dock or task bar. Clicking Cancel simply changes nothing.
+
+You can also paste a folder's path straight into the box underneath, which is quicker if
+you already have it copied.
 
 **3. Choose the channel list**, exactly as described below, then click **Process
 recordings**.
