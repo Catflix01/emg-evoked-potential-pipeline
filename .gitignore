@@ -109,3 +109,6 @@ results/
 .DS_Store
 .vscode/
 .idea/
+
+# Written at build time so a copy can say which build it is; never committed.
+build-info.txt

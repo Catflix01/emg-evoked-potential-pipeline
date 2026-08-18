@@ -127,6 +127,7 @@ A progress bar shows how far along it is.
 | `auc` | the area under the response, after the resting level is subtracted |
 | `prestim_pk_pk`, `prestim_auc` | the same two, measured just *before* the stimulus, so you can see how quiet the muscle was |
 | `baseline` | where the channel was sitting at rest; a large or drifting value usually means a bad electrode |
+| `stimulus_intensity` | for recruitment recordings, how hard the stimulator was driven; blank for everything else |
 | `response_window`, `prestim_window` | which stretch of the recording each number came from |
 
 **Four figures**, each answering one question: which muscles responded, whether each
@@ -141,6 +142,16 @@ protocol did what it should, and whether the two measurements agree with each ot
 **A recording is listed as skipped.** Open the "could not be measured" section. It gives
 the reason for each one. The most common are that the channel list has no entry for that
 participant and date, or that no stimulus was detected in the file.
+
+**Are any recordings being skipped before they are even measured?** A recording whose name
+cannot be read is passed over, which is quiet by design and easy to miss. To check a whole
+study at once, without opening any of the recordings:
+
+```bash
+python main.py survey --data <your folder>
+```
+
+It prints how many names can be read, and groups the ones that cannot by shape.
 
 **Two columns are empty.** `session` and `experiment` come from the names of the folders
 your recordings sit in. On the web page's *A few files* tab they will be blank, because a

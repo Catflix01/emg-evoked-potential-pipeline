@@ -245,3 +245,36 @@ for the amplitude columns, whose values are an order of magnitude smaller: a med
 
 Four decimals is still plainly readable, `0.016`, `0.3991`, `72.6487`, and loses nothing that
 matters at these magnitudes.
+
+## Recruitment curves, and the file shape that hid 71% of a study
+
+A recruitment curve is recorded once and saved as one file per stimulator intensity:
+
+```
+P1Sxx_V1T0_LAPB_TSS_REC__120.csv
+                        ^^^^^^^ where every other recording carries its timestamp
+```
+
+The doubled underscore is the gap the date and time would have filled. The parser anchors on
+the `MMDDYYYY-HH-MM-SS` token, since the protocol can be one, two or three pieces wide, so a
+file with no such token was rejected. Rejected files are skipped rather than announced, which
+is the part that mattered: nothing looked wrong.
+
+Measured across a real study of 1293 recordings, **921 could not be read, and 920 of them were
+this one shape.** The five recordings kept beside the code are all one participant and all
+conventionally named, so no test could have found it. `python main.py survey --data <folder>`
+now answers the question those tests could not: can every name in a real study be read at all.
+
+The remaining single failure is a file named `test_<timestamp>.csv`, with no subject, visit,
+target or protocol. It holds a real 19-channel recording, but there is nothing to file its
+measurements under, so it stays skipped.
+
+`protocol_1` and `protocol_2` come out as `TSS` and `REC`, exactly as they do for the
+timestamped `TSS_REC_<timestamp>` recording the slices were cut from, so a curve groups with
+its own protocol instead of becoming one protocol per intensity. `date` and `time` are blank,
+because the name genuinely does not carry them, and the intensity goes in
+`stimulus_intensity`.
+
+That column is appended after `baseline` and `onset_blanked_ms` rather than placed beside
+`protocol_2`, so that the column order in `docs/Table-layout.csv` — the agreed layout — is
+left exactly as specified. Additions trail it; nothing inside it moves.

@@ -162,6 +162,25 @@ def pick_folder_the_old_way():
 
 
 @st.cache_data(show_spinner=False)
+def which_copy_is_this():
+    """Which build this is, so a stale copy cannot pass for a current one.
+
+    A copy left running keeps serving the code it was built with, and looks identical to
+    one built this minute. Saying so on screen is the difference between "the app is
+    broken" and "this is an old copy".
+    """
+    stamped = ROOT / "build-info.txt"
+    if stamped.exists():
+        return stamped.read_text().strip()
+    try:
+        commit = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "--short", "HEAD"],
+                                capture_output=True, text=True, timeout=5).stdout.strip()
+    except Exception:
+        commit = ""
+    return f"running from source, {commit}" if commit else "running from source"
+
+
+@st.cache_data(show_spinner=False)
 def recordings_in(folder):
     """The recordings under a folder, or none if it does not exist yet."""
     path = Path(folder).expanduser() if folder.strip() else None
@@ -272,6 +291,9 @@ with st.sidebar:
                f"({config['windows_ms']['response'].get('PNS', ['—', '—'])[0]}–"
                f"{config['windows_ms']['response'].get('PNS', ['—', '—'])[1]} ms), "
                "because a peripheral M-wave arrives much sooner.")
+
+    st.divider()
+    st.caption(f"This copy: {which_copy_is_this()}")
 
 
 def manifest_or_none():

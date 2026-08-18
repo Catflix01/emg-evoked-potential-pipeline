@@ -4,6 +4,7 @@
     python main.py process               measure the recordings, write the results
     python main.py figures               draw the figures
     python main.py check   --data FOLDER what the pipeline found, and does it look right
+    python main.py survey  --data FOLDER can every recording's name even be read
     python main.py compare --data FOLDER this pipeline against the old MATLAB
     python main.py demo                  generate synthetic recordings to try things on
     python main.py safe-to-publish       what git would commit, and whether it is safe
@@ -43,6 +44,12 @@ def check(args):
     selfcheck.main()
 
 
+def survey(args):
+    import survey_names
+    sys.argv = ["survey_names", "--data", args.data]
+    raise SystemExit(survey_names.main())
+
+
 def compare(args):
     import compare_legacy
     sys.argv = ["compare_legacy"] + (["--data", args.data] if args.data else [])
@@ -63,6 +70,7 @@ COMMANDS = {
     "process": (process, "measure the recordings and write the results"),
     "figures": (figures, "draw the figures into outputs/figures/"),
     "check": (check, "report what the pipeline found, and whether it looks right"),
+    "survey": (survey, "check every recording's name can be read, without opening them"),
     "compare": (compare, "compare this pipeline against the old MATLAB"),
     "demo": (demo, "generate synthetic recordings to try things on"),
     "safe-to-publish": (safe_to_publish, "check nothing patient-related would be committed"),
@@ -82,6 +90,8 @@ def build_parser():
         sub = subparsers.add_parser(name, help=help_text, description=help_text)
         if name in {"process", "check", "compare"}:
             sub.add_argument("--data", help="folder of recordings; defaults to the configured one")
+        if name == "survey":
+            sub.add_argument("--data", required=True, help="folder of recordings to check")
         if name == "check":
             sub.add_argument("--anonymise", action="store_true",
                              help="replace session names, which contain subject codes and dates")

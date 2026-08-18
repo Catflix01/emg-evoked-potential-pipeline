@@ -47,6 +47,13 @@ jobs:
         continue-on-error: true
         run: python -c "import tkinter; print('tkinter present:', tkinter.TkVersion)"
 
+      # So a copy left running can be told apart from a current one on screen.
+      - name: Stamp which build this is
+        run: |
+          "built $(Get-Date -Format yyyy-MM-dd) from ${{ github.sha }}".Substring(0, 30) |
+            Out-File -Encoding utf8 -NoNewline build-info.txt
+          Get-Content build-info.txt
+
       - name: Build
         run: |
           pyinstaller --onefile --name EMG-Pipeline `
@@ -59,6 +66,7 @@ jobs:
             --add-data "src;src" `
             --add-data "config;config" `
             --add-data "app.py;." `
+            --add-data "build-info.txt;." `
             launcher.py
 
       # Two separate questions. A server that answers is not the same as an app that runs:
@@ -134,6 +142,11 @@ jobs:
       - name: Check this build will have a folder chooser
         run: python3 -c "import tkinter; print('tkinter present:', tkinter.TkVersion)"
 
+      - name: Stamp which build this is
+        run: |
+          echo "built $(date -u +%Y-%m-%d) from $(echo ${{ github.sha }} | cut -c1-7)" > build-info.txt
+          cat build-info.txt
+
       - name: Build
         run: |
           pyinstaller --windowed --name EMG-Pipeline \
@@ -146,6 +159,7 @@ jobs:
             --add-data "src:src" \
             --add-data "config:config" \
             --add-data "app.py:." \
+            --add-data "build-info.txt:." \
             launcher.py
 
       - name: Check it starts, and that the app itself runs

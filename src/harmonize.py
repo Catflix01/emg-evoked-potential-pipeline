@@ -50,7 +50,7 @@ SCHEMA = [
     "response_onset", "response_offset", "emg_resuming",
     "2nd_response_onset", "2nd_response_offset", "2nd_emg_resuming",
     "n_pulses_dropped",
-    "baseline", "onset_blanked_ms",
+    "baseline", "onset_blanked_ms", "stimulus_intensity",
 ]
 # The shape of each piece of a recording's filename, and the column each part becomes.
 # Read the (?P<name> ...) bits as "call this piece <name>"; the rest describes its shape:
@@ -73,10 +73,21 @@ TARGET_TOKEN = re.compile(r"""
 """, re.VERBOSE)
 
 DATETIME_TOKEN = re.compile(r"""
-    ^ (?P<date>   \d{8} ) -           
-      (?P<hour>   \d{2} ) -           
-      (?P<minute> \d{2} ) -           
-      (?P<second> \d{2} ) $           
+    ^ (?P<date>   \d{8} ) -
+      (?P<hour>   \d{2} ) -
+      (?P<minute> \d{2} ) -
+      (?P<second> \d{2} ) $
+""", re.VERBOSE)
+
+# A recruitment curve is saved one file per stimulator intensity, and those files carry the
+# intensity where every other recording carries the date and time:
+# P1Sxx_V1T0_LAPB_TSS_REC__120. The doubled underscore is the empty space the timestamp
+# would have filled. Matched against the whole name, because splitting on underscores
+# would leave REC, an empty piece, and the number as three separate tokens.
+RECRUITMENT_NAME = re.compile(r"""
+    ^ (?P<before> .+ )                # P1Sxx_V1T0_LAPB_TSS
+      _ REC __                        # the protocol always ends in REC
+      (?P<stimulus_intensity> \d+ ) $ # how hard the stimulator was driven
 """, re.VERBOSE)
 
 # A session folder, e.g. DEMO1S01_V1E1_01012024. The experiment number lives only here —
@@ -106,12 +117,18 @@ def _split_token(pattern, token):
 def parse_filename(csv_path):
     # Read the study, subject, visit, target and protocol out of a recording's filename.
     name = Path(csv_path).name
-    tokens = Path(csv_path).stem.split("_")
+    stem = Path(csv_path).stem
+    tokens = stem.split("_")
 
     # Find the date-time piece rather than counting underscores, because the protocol
     # can be one, two or three pieces wide (PNS_Mmx, SIC_025, PNS_010_sec).
     date_index = next((i for i, t in enumerate(tokens) if DATETIME_TOKEN.match(t)), None)
-    if date_index is None or date_index < 4:
+
+    if date_index is None:
+        # No timestamp: the one other shape is a recruitment file, named by intensity.
+        return _parse_recruitment_filename(name, stem)
+
+    if date_index < 4:
         raise ValueError(f"{name}: no MMDDYYYY-HH-MM-SS token after subject/visit/target/protocol")
 
     stamp = DATETIME_TOKEN.match(tokens[date_index])
@@ -130,6 +147,37 @@ def parse_filename(csv_path):
         "date": datetime.strptime(date_token, "%m%d%Y").date(),
         # The clock time separates two runs of the same protocol on the same day.
         "time": f"{stamp['hour']}:{stamp['minute']}:{stamp['second']}",
+        "stimulus_intensity": None,
+    }
+
+
+def _parse_recruitment_filename(name, stem):
+    """One slice of a recruitment curve: the same recording, at one stimulator intensity.
+
+    These have no date or time in the name, so both come out blank. The protocol reads as
+    TSS + REC, the same as the timestamped recording the slices came from, so a recruitment
+    run groups with its own protocol rather than becoming a protocol of its own.
+    """
+    slice_of_a_curve = RECRUITMENT_NAME.match(stem)
+    if not slice_of_a_curve:
+        raise ValueError(f"{name}: no MMDDYYYY-HH-MM-SS token after subject/visit/target/protocol")
+
+    tokens = slice_of_a_curve["before"].split("_")
+    if len(tokens) < 4:
+        raise ValueError(f"{name}: a recruitment file still needs subject, visit, target "
+                         "and protocol before the intensity")
+
+    return {
+        "_subject_token": tokens[0],
+        "_date_token": None,
+        **_split_token(SUBJECT_TOKEN, tokens[0]),
+        **_split_token(VISIT_TOKEN, tokens[1]),
+        **_split_token(TARGET_TOKEN, tokens[2]),
+        "protocol_1": tokens[3],
+        "protocol_2": "_".join(tokens[4:] + ["REC"]),
+        "date": None,
+        "time": None,
+        "stimulus_intensity": int(slice_of_a_curve["stimulus_intensity"]),
     }
 
 
