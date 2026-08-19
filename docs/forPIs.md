@@ -140,6 +140,12 @@ protocol did what it should, and whether the two measurements agree with each ot
 
 ## If something does not work
 
+**Nothing happens when you open it.** It is almost certainly already running. A computer
+will not start a second copy of a program that is already open, so the second double-click
+does nothing you can see. Open **http://localhost:8501** in your browser and it will be
+there. To start it fresh instead, quit it first: right-click its icon in the Dock or task
+bar and choose Quit.
+
 **A recording is listed as skipped.** Open the "could not be measured" section. It gives
 the reason for each one. The most common are that the channel list has no entry for that
 participant and date, or that no stimulus was detected in the file.

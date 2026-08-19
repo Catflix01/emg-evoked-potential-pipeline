@@ -57,6 +57,7 @@ jobs:
       - name: Build
         run: |
           pyinstaller --onefile --name EMG-Pipeline `
+            --icon web/assets/icon.ico `
             --collect-all streamlit `
             --collect-all pandas `
             --collect-all matplotlib `
@@ -150,6 +151,7 @@ jobs:
       - name: Build
         run: |
           pyinstaller --windowed --name EMG-Pipeline \
+            --icon web/assets/icon.icns \
             --collect-all streamlit \
             --collect-all pandas \
             --collect-all matplotlib \
