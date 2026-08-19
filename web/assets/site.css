@@ -1,0 +1,248 @@
+/* Layout, navigation, footer and prose for the site pages.
+ *
+ * Colours all come from theme.css; there are no raw colours here on purpose.
+ * The app page has its own small stylesheet, app.css, and does not use this one.
+ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 16px/1.65 system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* nothing may push the page sideways, whatever the screen */
+  overflow-x: hidden;
+}
+
+/* ---------------------------------------------------------------- shared pieces */
+
+.wrap { width: min(100% - 2.5rem, var(--page)); margin-inline: auto; }
+
+a { color: var(--accent); text-underline-offset: 2px; }
+a:hover { text-decoration-thickness: 2px; }
+
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+
+.skip-link {
+  position: absolute; left: .5rem; top: -4rem; z-index: 100;
+  padding: .6rem 1rem; border-radius: var(--radius);
+  background: var(--accent); color: var(--accent-ink); text-decoration: none;
+  transition: top .15s;
+}
+.skip-link:focus { top: .5rem; }   /* only appears when tabbed to */
+
+/* how far down the page you are; guides are long enough for it to earn its place */
+.progress {
+  position: fixed; inset: 0 auto auto 0; height: 3px; width: 0;
+  background: var(--accent); z-index: 60; transition: width .1s linear;
+}
+
+/* ---------------------------------------------------------------- header */
+
+.site-header {
+  position: sticky; top: 0; z-index: 50;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--edge);
+}
+.site-header .wrap {
+  display: flex; align-items: center; gap: 1rem;
+  min-height: 60px;
+}
+
+.logo {
+  display: flex; align-items: center; gap: .55rem;
+  font-weight: 650; color: var(--ink); text-decoration: none;
+  margin-right: auto;
+}
+.logo:hover { color: var(--accent); }
+.logo svg { width: 26px; height: 26px; flex: none; }
+
+.nav { display: flex; align-items: center; gap: .25rem; }
+.nav a {
+  padding: .45rem .7rem; border-radius: var(--radius);
+  color: var(--ink); text-decoration: none; white-space: nowrap;
+}
+.nav a:hover { background: var(--paper-raised); color: var(--accent); }
+.nav a[aria-current="page"] { color: var(--accent); background: var(--accent-soft); }
+
+.icon-button {
+  display: grid; place-items: center;
+  width: 38px; height: 38px; flex: none;
+  border: 1px solid var(--edge); border-radius: var(--radius);
+  background: var(--paper-raised); color: var(--ink);
+  font-size: 1rem; cursor: pointer;
+}
+.icon-button:hover { border-color: var(--accent); color: var(--accent); }
+
+.menu-button { display: none; }
+
+/* ---------------------------------------------------------------- mobile menu */
+
+@media (max-width: 780px) {
+  .menu-button { display: grid; }
+  .nav {
+    position: fixed; inset: 60px 0 auto 0;
+    flex-direction: column; align-items: stretch; gap: 0;
+    padding: .5rem 1.25rem 1.25rem;
+    background: var(--paper); border-bottom: 1px solid var(--edge);
+    box-shadow: var(--shadow);
+    display: none;
+  }
+  .nav[data-open="true"] { display: flex; }
+  .nav a { padding: .8rem .6rem; border-radius: 0; border-bottom: 1px solid var(--edge); }
+}
+
+/* ---------------------------------------------------------------- prose */
+
+main { padding: 2.5rem 0 4rem; }
+
+.prose { max-width: var(--measure); }
+.prose h1 { font-size: clamp(1.7rem, 1.2rem + 2vw, 2.4rem); line-height: 1.2; margin: 0 0 .6rem; }
+.prose h2 { font-size: 1.35rem; margin: 2.4rem 0 .6rem; }
+.prose h3 { font-size: 1.1rem; margin: 1.8rem 0 .4rem; }
+.prose p, .prose li { color: var(--ink); }
+.prose code {
+  background: var(--paper-raised); border: 1px solid var(--edge);
+  padding: .1em .35em; border-radius: 5px;
+  font-size: .9em; word-break: break-word;
+}
+
+/* Wide things scroll inside their own box. The page itself never scrolls sideways —
+   this is the rule that keeps a 38-column results table off the edge of a phone. */
+.prose pre, .table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.prose pre {
+  background: var(--paper-raised); border: 1px solid var(--edge);
+  border-radius: var(--radius); padding: 1rem; position: relative;
+}
+.prose pre code { background: none; border: 0; padding: 0; white-space: pre; }
+.prose table { border-collapse: collapse; width: 100%; font-size: .95rem; }
+.prose th, .prose td { border: 1px solid var(--edge); padding: .5rem .6rem; text-align: left; }
+.prose th { background: var(--paper-raised); }
+.prose img { max-width: 100%; height: auto; }
+
+.copy-button {
+  position: absolute; top: .5rem; right: .5rem;
+  padding: .25rem .6rem; font-size: .8rem;
+  border: 1px solid var(--edge); border-radius: 6px;
+  background: var(--paper); color: var(--ink-soft); cursor: pointer;
+  opacity: 0; transition: opacity .15s;
+}
+pre:hover .copy-button, .copy-button:focus-visible { opacity: 1; }
+.copy-button:hover { color: var(--accent); border-color: var(--accent); }
+
+/* ---------------------------------------------------------------- landing page */
+
+.hero { padding: 3.5rem 0 1rem; }
+.hero h1 { font-size: clamp(2rem, 1.3rem + 3vw, 3rem); line-height: 1.1; margin: 0 0 .8rem; }
+.hero p.lead { font-size: 1.15rem; color: var(--ink-soft); max-width: 60ch; margin: 0 0 1.8rem; }
+
+.button-row { display: flex; flex-wrap: wrap; gap: .75rem; }
+
+.button {
+  display: inline-flex; align-items: center; gap: .5rem;
+  padding: .7rem 1.15rem; border-radius: var(--radius);
+  border: 1px solid var(--edge); background: var(--paper-raised);
+  color: var(--ink); text-decoration: none; font-weight: 550;
+}
+.button:hover { border-color: var(--accent); color: var(--accent); }
+.button.primary {
+  background: var(--accent); border-color: var(--accent); color: var(--accent-ink);
+}
+.button.primary:hover { filter: brightness(1.08); color: var(--accent-ink); }
+
+.cards {
+  display: grid; gap: 1rem; margin: 1.5rem 0 0;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  padding: 0; list-style: none;
+}
+.card {
+  border: 1px solid var(--edge); border-radius: var(--radius);
+  background: var(--paper-raised); padding: 1.1rem 1.2rem;
+}
+.card h3 { margin: 0 0 .35rem; font-size: 1.05rem; }
+.card p { margin: 0; color: var(--ink-soft); font-size: .95rem; }
+.card a { font-weight: 550; }
+
+.note {
+  border: 1px solid var(--warn-edge); background: var(--warn-soft);
+  border-radius: var(--radius); padding: 1rem 1.2rem; margin: 2rem 0 0;
+}
+.note p { margin: .3rem 0 0; }
+.note strong { display: block; }
+
+/* ---------------------------------------------------------------- search */
+
+.search { position: relative; margin: 0 0 2rem; max-width: var(--measure); }
+.search input {
+  width: 100%; padding: .7rem .9rem;
+  border: 1px solid var(--edge); border-radius: var(--radius);
+  background: var(--paper-raised); color: var(--ink); font: inherit;
+}
+.search-results { list-style: none; margin: .5rem 0 0; padding: 0; }
+.search-results li { padding: .1rem 0; }
+.search-results .where { color: var(--ink-soft); font-size: .85rem; }
+.search-empty { color: var(--ink-soft); font-size: .9rem; padding: .4rem 0; }
+
+/* ---------------------------------------------------------------- footer */
+
+.site-footer {
+  border-top: 1px solid var(--edge); background: var(--paper-raised);
+  padding: 2.5rem 0; margin-top: 4rem; font-size: .93rem;
+}
+.footer-columns {
+  display: grid; gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+}
+.footer-columns h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .06em;
+                     color: var(--ink-soft); margin: 0 0 .5rem; }
+.footer-columns ul { list-style: none; margin: 0; padding: 0; }
+.footer-columns li { padding: .15rem 0; }
+.footer-bottom {
+  margin-top: 2rem; padding-top: 1.2rem; border-top: 1px solid var(--edge);
+  color: var(--ink-soft); display: flex; flex-wrap: wrap; gap: .4rem 1.2rem;
+}
+
+/* ---------------------------------------------------------------- back to top */
+
+.to-top {
+  position: fixed; right: 1rem; bottom: 1rem; z-index: 40;
+  width: 44px; height: 44px; border-radius: 50%;
+  border: 1px solid var(--edge); background: var(--paper-raised); color: var(--ink);
+  box-shadow: var(--shadow); cursor: pointer; font-size: 1.1rem;
+  display: grid; place-items: center;
+  opacity: 0; visibility: hidden; transition: opacity .2s, visibility .2s;
+}
+.to-top[data-visible="true"] { opacity: 1; visibility: visible; }
+.to-top:hover { color: var(--accent); border-color: var(--accent); }
+
+/* ---------------------------------------------------------------- printing */
+
+@media print {
+  .site-header, .site-footer, .to-top, .progress, .skip-link,
+  .copy-button, .search, .button-row { display: none !important; }
+  body { background: #fff; color: #000; font-size: 11pt; }
+  .wrap { width: auto; margin: 0; }
+  .prose { max-width: none; }
+  .prose pre, .prose table { break-inside: avoid; border: 1px solid #999; }
+  /* a printed page cannot be clicked, so say where the link went */
+  .prose a[href^="http"]::after { content: " (" attr(href) ")"; font-size: 9pt; word-break: break-all; }
+  h2, h3 { break-after: avoid; }
+}
+
+/* For labels that a screen reader should announce but that would clutter the page. */
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px;
+  margin: -1px; padding: 0; border: 0;
+  clip-path: inset(50%); overflow: hidden; white-space: nowrap;
+}

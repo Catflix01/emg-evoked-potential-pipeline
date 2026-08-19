@@ -37,40 +37,20 @@ jobs:
       - name: Refuse to publish if anything patient-related would go with it
         run: python3 src/check_before_publish.py
 
-      - name: Assemble the site
-        run: |
-          mkdir -p site/src site/config
-          cp web/index.html web/style.css web/script.js web/pi_app.py site/
-          # only the modules the browser app imports; nothing that needs pyarrow,
-          # joblib or a terminal
-          cp src/harmonize.py src/cusum.py src/figures.py site/src/
-          cp src/lineups.py src/lineups.json site/src/
-          cp config/params.yaml site/config/
+      # markdown is needed only to turn docs/*.md into the guides. It is deliberately not
+      # in requirements.txt, so it never gets bundled into the desktop downloads.
+      - name: Install what the site build needs
+        run: pip install markdown==3.10.3
 
-      # The list of files is read out of the page's own source rather than repeated here,
-      # because a second copy of a list drifts: a module added to the page and not to the
-      # copy publishes a page that fails on its first import. Anything the HTML pulls in
-      # by src= or href= is picked up too, so splitting the page into more files cannot
-      # quietly leave one of them behind.
-      - name: Check every file the page asks for is present
-        run: |
-          python3 - <<'PY'
-          import re, sys
-          from pathlib import Path
-          html = Path("web/index.html").read_text()
-          attached = re.findall(r'(?:src|href)="([^":]+)"', html)
-          listing = re.search(r"const sourceFiles = \[(.*?)\]",
-                              Path("web/script.js").read_text(), re.S)
-          if not listing:
-              print("web/script.js no longer declares sourceFiles"); sys.exit(1)
-          block = listing.group(1)
-          asked_for = ["index.html"] + attached + re.findall(r'"([^"]+)"', block)
-          missing = [f for f in asked_for if not (Path("site") / f).exists()]
-          for f in missing:
-              print(f"missing from the site: {f}")
-          sys.exit(1 if missing else 0)
-          PY
-          echo "all referenced files present"
+      - name: Build the site
+        run: python3 web/build_site.py --out site
+
+      # The same check that runs locally: every link and asset resolves, no template
+      # placeholder is left showing, and the app has every Python file it imports. It
+      # reads those lists out of the pages themselves rather than keeping a second copy,
+      # because a second copy drifts and then stops checking anything.
+      - name: Check every link and asset resolves
+        run: python3 web/check_site.py --site site
 
       - name: Confirm no recording was swept into the site
         run: |

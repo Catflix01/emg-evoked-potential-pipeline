@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{title}} · EMG pipeline</title>
+  <meta name="description" content="{{description}}" />
+  <link rel="icon" href="{{root}}assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="{{root}}assets/theme.css" />
+  <link rel="stylesheet" href="{{root}}assets/site.css" />
+  <script type="module" src="{{root}}assets/theme.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to the content</a>
+  <div class="progress" data-progress></div>
+
+  <header class="site-header">
+    <div class="wrap">
+      <a class="logo" href="{{root}}">
+        <img src="{{root}}assets/favicon.svg" alt="" width="26" height="26" />
+        <span>EMG pipeline</span>
+      </a>
+      <nav class="nav" data-nav aria-label="Main">
+        <a href="{{root}}guides/forPIs.html">Guide</a>
+        <a href="{{root}}guides/pipeline-notes.html">How it works</a>
+        <a href="{{root}}guides/cusum-method.html">Response timing</a>
+        <a href="{{root}}#downloads">Downloads</a>
+        <a href="{{root}}app/">Open the tool</a>
+      </nav>
+      <button class="icon-button menu-button" data-menu-button
+              type="button" aria-expanded="false" aria-controls="main-nav"
+              aria-label="Menu">☰</button>
+      <button class="icon-button" data-theme-toggle type="button" aria-pressed="false">☾</button>
+    </div>
+  </header>
+
+  <!-- Each page supplies its own wrap, so a guide can be a column of prose while the
+       landing page runs full width. -->
+  <main id="content">
+{{content}}
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <div class="footer-columns">
+        <div>
+          <h2>Guides</h2>
+          <ul>
+            <li><a href="{{root}}guides/forPIs.html">Using the tool</a></li>
+            <li><a href="{{root}}guides/pipeline-notes.html">How it works</a></li>
+            <li><a href="{{root}}guides/cusum-method.html">Response timing</a></li>
+          </ul>
+        </div>
+        <div>
+          <h2>Run it</h2>
+          <ul>
+            <li><a href="{{root}}app/">In your browser</a></li>
+            <li><a href="{{repo}}/releases">Download for Windows or Mac</a></li>
+            <li><a href="{{repo}}">Source code</a></li>
+          </ul>
+        </div>
+        <div>
+          <h2>Contact</h2>
+          <ul>
+            <li><a href="{{repo}}/issues">Report a problem</a></li>
+            <li><a href="{{repo}}/issues/new">Ask a question</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© {{year}} Spinal Cord Injury research lab</span>
+        <span>Last updated {{updated}}</span>
+        <span>No cookies, no tracking, no analytics.</span>
+      </div>
+    </div>
+  </footer>
+
+  <button class="to-top" data-to-top type="button" aria-label="Back to the top">↑</button>
+  <script type="module" src="{{root}}assets/nav.js"></script>
+</body>
+</html>

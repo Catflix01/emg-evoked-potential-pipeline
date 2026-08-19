@@ -1,0 +1,61 @@
+/* Colours, in one place, as custom properties.
+ *
+ * Every other stylesheet uses these names and never a raw colour, so changing the palette
+ * means editing this file and nothing else. Dark mode is the same names with different
+ * values, which is why the toggle can be a single attribute on <html>.
+ */
+
+:root {
+  --ink:          #16181d;   /* body text */
+  --ink-soft:     #5a6272;   /* captions, footnotes */
+  --paper:        #ffffff;   /* page background */
+  --paper-raised: #f5f7fa;   /* cards, code blocks, the header */
+  --edge:         #dfe3ea;   /* hairlines */
+  --accent:       #1f5fbf;   /* links and buttons */
+  --accent-ink:   #ffffff;   /* text on the accent colour */
+  --accent-soft:  #eaf1fc;   /* accent background at low strength */
+  --warn-soft:    #fff6e5;   /* the "read this before you point it at patients" note */
+  --warn-edge:    #e0a800;
+
+  --shadow: 0 1px 2px rgb(16 24 40 / 6%), 0 4px 12px rgb(16 24 40 / 4%);
+  --radius: 10px;
+  --measure: 68ch;           /* a comfortable line length for prose */
+  --page: 1100px;            /* the widest the content ever gets */
+}
+
+/* Follows the operating system until someone presses the toggle. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ink:          #e6e9ef;
+    --ink-soft:     #a2abbd;
+    --paper:        #14161a;
+    --paper-raised: #1c1f26;
+    --edge:         #2c313b;
+    --accent:       #7fb0ff;
+    --accent-ink:   #10131a;
+    --accent-soft:  #1b2534;
+    --warn-soft:    #2a2317;
+    --warn-edge:    #a4801d;
+    --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 4px 12px rgb(0 0 0 / 30%);
+  }
+}
+
+/* An explicit choice wins over the operating system, in both directions. */
+:root[data-theme="dark"] {
+  --ink:          #e6e9ef;
+  --ink-soft:     #a2abbd;
+  --paper:        #14161a;
+  --paper-raised: #1c1f26;
+  --edge:         #2c313b;
+  --accent:       #7fb0ff;
+  --accent-ink:   #10131a;
+  --accent-soft:  #1b2534;
+  --warn-soft:    #2a2317;
+  --warn-edge:    #a4801d;
+  --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 4px 12px rgb(0 0 0 / 30%);
+}
+
+/* Tells the browser to draw form controls and scrollbars to match. */
+:root { color-scheme: light dark; }
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"]  { color-scheme: dark; }

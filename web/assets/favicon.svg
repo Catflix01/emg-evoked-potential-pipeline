@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="EMG pipeline">
+  <!-- A stimulus pulse, then the response it evokes: what this tool measures.
+       SVG rather than a bitmap, so it is a few hundred bytes and stays sharp at any size. -->
+  <rect width="32" height="32" rx="7" fill="#1f5fbf"/>
+  <path d="M3 20 h5 l1.6 -9 1.6 9 h2.2"
+        fill="none" stroke="#ffffff" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" opacity=".55"/>
+  <path d="M14.4 20 q2.4 0 3.4 -7 1.2 13 2.6 -1.5 1 6 2.2 3 Q23.8 20 29 20"
+        fill="none" stroke="#ffffff" stroke-width="2.2"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

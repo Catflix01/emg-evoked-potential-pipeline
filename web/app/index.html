@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The tool · EMG pipeline</title>
+  <meta name="description" content="Measure EMG recordings in your browser. The analysis
+        runs on your own computer; nothing is uploaded and there is no server to upload to." />
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+
+  <!-- stlite runs Python inside the browser. The recordings a visitor picks are read by
+       that in-browser Python and never sent anywhere, because there is no server.
+       theme.css is loaded for the loading screen; Streamlit brings its own styles, and is
+       told which theme to use in app.js rather than being restyled from outside. -->
+  <link rel="stylesheet" href="../assets/theme.css" />
+  <link rel="stylesheet" href="../assets/app.css" />
+</head>
+<body>
+  <div id="loading">
+    <a class="back" href="../">← EMG pipeline</a>
+    <div class="spinner"></div>
+    <h1>Starting the tool</h1>
+    <p>
+      This takes about half a minute the first time, while your browser downloads the
+      software. After that it is quick.
+    </p>
+    <p>
+      Everything runs on this computer. Your recordings are never sent anywhere.
+    </p>
+  </div>
+
+  <div id="root"></div>
+
+  <script type="module" src="../assets/theme.js"></script>
+  <script type="module" src="../assets/app.js"></script>
+</body>
+</html>

@@ -7,22 +7,31 @@ in a pre-stimulus window and a response window.
 Recordings and the channel-lineup workbook are never part of this repository: they are
 human-subjects material. Everything here runs on data you supply.
 
-## Two ways to run it without a terminal
+## The site
 
-**The Windows download**, for real work. Reads folders straight off the disk, so a whole
-session or participant is no problem. Built by GitHub Actions on every push; grab it from
-the Artifacts of the latest *build the Windows download* run. **Not yet verified by anyone
-on Windows.**
+**<https://catflix01.github.io/emg-evoked-potential-pipeline/>** — what the tool is, the
+downloads, the guides, and the browser version itself at `/app/`.
 
-**The browser page**, for a quick look at a few recordings. The Python runs inside your own
-browser, so nothing is uploaded, but a browser can only hold a few hundred megabytes, which
-is less than one session here.
+## Three ways to run it without a terminal
 
-Both run the same pipeline and give the same numbers.
+**The Windows download** and **the Mac download**, for real work. Both read folders straight
+off the disk, so a whole session, participant or study is no problem. Take them from the
+[Releases](https://github.com/Catflix01/emg-evoked-potential-pipeline/releases) page, which
+needs no GitHub account. Every push also builds them, and those builds are under the
+Actions tab for anyone signed in.
 
-[**docs/forPIs.md**](docs/forPIs.md) is the one-page guide for anyone using it this
-way. The link to the page itself appears once GitHub Pages is switched on for the
-repository, under Settings, Pages.
+Both are unsigned, so the first time you open one your computer will warn you: on Windows,
+More info then Run anyway; on a Mac, System Settings → Privacy & Security → Open Anyway.
+The Windows executable is built and started automatically on every change, but **has not
+yet been opened on a real Windows desktop by anyone.**
+
+**The browser version**, for a quick look at a few recordings, with nothing installed. The
+Python runs inside your own browser, so nothing is uploaded, but a browser can only hold a
+few hundred megabytes, which is less than one session here.
+
+All three run the same pipeline and give the same numbers.
+
+[**docs/forPIs.md**](docs/forPIs.md) is the one-page guide for anyone using it this way.
 
 Everything below is for running it from a terminal instead, which is faster and adds the
 comparison and self-check tools.
@@ -89,12 +98,37 @@ the "Check my data" tab in the app.
 Some columns are not yet verified against known-correct data. `python main.py check` says
 which, every time it runs.
 
+## Checking that every recording can even be read
+
+A recording whose filename the pipeline cannot parse is skipped quietly. To ask, for a
+whole study at once, without opening any of the recordings:
+
+```bash
+python main.py survey --data <YOUR FOLDER>
+```
+
+It reports how many names can be read and groups the rest by shape. This is worth running
+against a new study before trusting any results from it: it is how 920 recruitment
+recordings, 71% of one study, turned out to be going missing without any error appearing.
+
 ## Publishing it
 
 The browser version is published as a page anyone can open, and it asks each visitor for
 their own recordings; no data of any kind travels with it. Run `python main.py
 safe-to-publish` before any push. It refuses if a recording, the manifest, or a participant
 code would be committed, and the same check runs again on GitHub for every push.
+
+The site is built from this repository:
+
+```bash
+pip install markdown
+python web/build_site.py --out site     # landing page, guides, 404, the app
+python web/check_site.py --site site    # every link resolves, nothing left unfilled
+```
+
+The guides under `/guides/` are generated from `docs/*.md`, so the markdown stays the one
+place they are written. `markdown` is not in `requirements.txt` on purpose: it is needed
+only to build the site and should never end up inside the desktop downloads.
 
 ## Documentation
 

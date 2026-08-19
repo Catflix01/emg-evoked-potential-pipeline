@@ -1,0 +1,79 @@
+<section class="hero">
+  <div class="wrap">
+    <h1>Measure every muscle's response to every stimulus pulse</h1>
+    <p class="lead">
+      Reads raw EMG recordings and produces one table: peak-to-peak and area under curve
+      per muscle per pulse, with the response timing and the window every number came from.
+    </p>
+    <div class="button-row">
+      <a class="button primary" href="app/">Open the tool in your browser</a>
+      <a class="button" href="#downloads">Download it</a>
+      <a class="button" href="guides/forPIs.html">Read the guide</a>
+    </div>
+  </div>
+</section>
+
+<section class="wrap">
+  <div class="note">
+    <strong>Your recordings never leave your computer.</strong>
+    <p>
+      The browser version runs the analysis inside your own browser, and the downloads run
+      on your machine. There is no server to send anything to, no account, no cookies and
+      no tracking of any kind.
+    </p>
+  </div>
+</section>
+
+<section class="wrap" id="downloads" style="margin-top:3rem">
+  <h2>Three ways to run it</h2>
+  <ul class="cards">
+    <li class="card">
+      <h3>Windows</h3>
+      <p>For whole sessions, participants, or the entire study. Reads folders straight off
+         your hard drive, so size stops mattering.</p>
+      <p style="margin-top:.6rem"><a href="{{repo}}/releases/latest">Download for Windows</a></p>
+    </li>
+    <li class="card">
+      <h3>Mac</h3>
+      <p>The same tool, as a Mac app. Nothing to install: unzip it and open it.</p>
+      <p style="margin-top:.6rem"><a href="{{repo}}/releases/latest">Download for Mac</a></p>
+    </li>
+    <li class="card">
+      <h3>In your browser</h3>
+      <p>For a look at a few recordings, with nothing installed. A browser can hold a few
+         hundred megabytes, which is less than one session here.</p>
+      <p style="margin-top:.6rem"><a href="app/">Open the tool</a></p>
+    </li>
+  </ul>
+  <p style="color:var(--ink-soft); margin-top:1rem">
+    All three run the same code and give the same numbers.
+  </p>
+</section>
+
+<section class="wrap" style="margin-top:3rem">
+  <h2>Search the guides</h2>
+  <div class="search">
+    <label class="visually-hidden" for="site-search">Search the guides</label>
+    <input id="site-search" type="search" placeholder="baseline, response window, channel list…"
+           data-search="search-index.json" autocomplete="off" />
+    <ul class="search-results" data-search-results></ul>
+  </div>
+
+  <ul class="cards">
+    <li class="card">
+      <h3><a href="guides/forPIs.html">Using the tool</a></h3>
+      <p>Open it, choose your recordings, pick the channel list, read the table.</p>
+    </li>
+    <li class="card">
+      <h3><a href="guides/pipeline-notes.html">How it works</a></h3>
+      <p>What <code>baseline</code> means, which window each protocol uses, why there are
+         two output files.</p>
+    </li>
+    <li class="card">
+      <h3><a href="guides/cusum-method.html">Response timing</a></h3>
+      <p>How onset, offset and EMG resumption are found, and the papers behind it.</p>
+    </li>
+  </ul>
+</section>
+
+<script type="module" src="assets/search.js"></script>

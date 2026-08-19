@@ -4,11 +4,12 @@ This turns raw EMG recordings into one organised table, with a row for every mus
 every stimulus pulse. You can look at the results on screen and download them as a
 spreadsheet.
 
-There are two ways to run it, and which you want depends on how much data you have.
+There are three ways to run it, and which you want depends on how much data you have.
 
 | | what it is for | how you get it |
 |---|---|---|
-| **The download** | whole sessions, participants, the entire study | one file from the project's Releases page, then double-click. No account needed |
+| **The Windows download** | whole sessions, participants, the entire study | one file from the project's Releases page, then double-click. No account needed |
+| **The Mac download** | the same, on a Mac | a `.zip` from the same page; unzip it and open the app inside |
 | **The web page** | a quick look at a handful of recordings | open a link, nothing to install |
 
 They run the same code and give the same numbers.

@@ -1,0 +1,44 @@
+/* The loading screen, and the few rules the app page needs around Streamlit.
+ *
+ * Deliberately small. Everything from the "Starting the tool" screen onward is drawn by
+ * Streamlit, which brings its own styles and is told which theme to use in app.js. Styling
+ * its insides from here would mean targeting class names it does not promise to keep.
+ */
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+  overflow-x: hidden;         /* the page never scrolls sideways on a phone */
+}
+
+#loading {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  min-height: 100vh; gap: 1rem;
+  padding: 2rem 1.5rem; text-align: center;
+}
+#loading h1 { margin: 0; font-size: 1.5rem; font-weight: 600; }
+#loading p { margin: 0; max-width: 34rem; line-height: 1.6; color: var(--ink-soft); }
+
+#loading .back {
+  position: absolute; top: 1rem; left: 1rem;
+  color: var(--accent); text-decoration: none; font-size: .95rem;
+}
+#loading .back:hover { text-decoration: underline; }
+
+.spinner {
+  width: 2.5rem; height: 2.5rem;
+  border: 3px solid currentColor; border-top-color: transparent;
+  border-radius: 50%; opacity: .4;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation-duration: 3s; }
+}
+
+/* Streamlit lays its own tables out; this only stops a wide one taking the page with it. */
+#root [data-testid="stDataFrame"] { max-width: 100%; }
