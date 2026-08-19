@@ -155,3 +155,14 @@ python -m pytest
 To publish it, delete the TESTS block in `.gitignore`. Worth doing when this repository
 goes to other labs, since the suite is what makes the numbers checkable by someone else
 rather than taken on trust.
+
+## Licence
+
+The code is under the [MIT licence](LICENSE): use it, change it, build on it, in a lab or
+in a product, as long as the copyright notice comes along.
+
+**The licence covers the code and nothing else.** Recordings, the channel-lineup workbook,
+and any results computed from patient data are human-subjects material. They are not in
+this repository, they are not distributed with it, and no permission to use them is granted
+here. Whether a given recording may be shared at all is an IRB question, not a licensing
+one.
