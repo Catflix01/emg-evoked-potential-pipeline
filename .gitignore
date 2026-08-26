@@ -112,3 +112,7 @@ results/
 
 # Written at build time so a copy can say which build it is; never committed.
 build-info.txt
+
+# A scratch folder for one-off local work. Never published: it holds working files
+# built from data that is not part of this repository.
+local/
